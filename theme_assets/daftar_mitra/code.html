@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html class="light" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Registration | Homecare Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .input-focus-ring:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 108, 73, 0.2);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-high": "#dce9ff",
+                      "on-background": "#0b1c30",
+                      "secondary-fixed": "#d8e2ff",
+                      "tertiary-fixed": "#e1e0ff",
+                      "surface-tint": "#006c49",
+                      "secondary-container": "#2170e4",
+                      "surface": "#f8f9ff",
+                      "outline": "#6c7a71",
+                      "on-secondary": "#ffffff",
+                      "secondary": "#0058be",
+                      "primary-fixed": "#6ffbbe",
+                      "primary-fixed-dim": "#4edea3",
+                      "on-tertiary-container": "#1d17b2",
+                      "primary": "#006c49",
+                      "surface-container": "#e5eeff",
+                      "on-secondary-container": "#fefcff",
+                      "on-primary-fixed": "#002113",
+                      "on-surface-variant": "#3c4a42",
+                      "tertiary-container": "#9699ff",
+                      "error-container": "#ffdad6",
+                      "outline-variant": "#bbcabf",
+                      "surface-bright": "#f8f9ff",
+                      "on-error": "#ffffff",
+                      "error": "#ba1a1a",
+                      "inverse-primary": "#4edea3",
+                      "surface-variant": "#d3e4fe",
+                      "on-primary-fixed-variant": "#005236",
+                      "primary-container": "#10b981",
+                      "on-primary": "#ffffff",
+                      "on-secondary-fixed-variant": "#004395",
+                      "on-secondary-fixed": "#001a42",
+                      "tertiary": "#494bd6",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-highest": "#d3e4fe",
+                      "background": "#f8f9ff",
+                      "on-tertiary-fixed-variant": "#2f2ebe",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary-fixed-dim": "#adc6ff",
+                      "surface-container-low": "#eff4ff",
+                      "on-primary-container": "#00422b",
+                      "on-surface": "#0b1c30",
+                      "surface-dim": "#cbdbf5",
+                      "on-tertiary-fixed": "#07006c",
+                      "tertiary-fixed-dim": "#c0c1ff",
+                      "on-error-container": "#93000a",
+                      "inverse-surface": "#213145"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "lg": "24px",
+                      "xl": "32px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "margin-mobile": "16px",
+                      "base": "4px",
+                      "margin-tablet": "32px",
+                      "gutter": "16px",
+                      "sm": "8px"
+              },
+              "fontFamily": {
+                      "label-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "body-md": ["Inter"],
+                      "data-mono": ["Inter"]
+              },
+              "fontSize": {
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-lg min-h-screen flex items-center justify-center overflow-x-hidden relative">
+<!-- Background Atmospheric Effect -->
+<div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+
+<div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-secondary/5 rounded-full blur-[100px]"></div>
+</div>
+<!-- Registration Container -->
+<main class="relative z-10 w-full max-w-[1200px] mx-auto px-margin-mobile py-xl md:py-0 flex flex-col md:flex-row gap-xl items-center min-h-screen justify-center">
+<!-- Hero Section (Desktop Left) -->
+<div class="hidden md:flex flex-col w-1/2 space-y-lg animate-fade-in">
+<div class="flex items-center gap-sm">
+<div class="p-2 bg-primary-container rounded-lg">
+<span class="material-symbols-outlined text-on-primary-container">medical_services</span>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Homecare Pro</h1>
+</div>
+<h2 class="font-headline-lg text-headline-lg leading-tight text-on-background">
+                Bergabunglah dengan Jaringan Tenaga Medis Profesional Kami.
+            </h2>
+<p class="text-on-surface-variant font-body-lg max-w-md">
+                Kelola jadwal konsultasi, rekam medis pasien, dan pendapatan Anda dalam satu platform terintegrasi yang dirancang khusus untuk efisiensi medis.
+            </p>
+<div class="grid grid-cols-2 gap-md pt-md">
+<div class="flex flex-col p-md bg-surface-container rounded-xl">
+<span class="material-symbols-outlined text-primary mb-2">groups</span>
+<span class="font-label-md text-label-md text-primary uppercase">Komunitas</span>
+<span class="font-headline-md text-headline-md font-bold">5,000+</span>
+<p class="font-body-md text-body-md opacity-70">Rekan Medis Terverifikasi</p>
+</div>
+<div class="flex flex-col p-md bg-surface-container rounded-xl">
+<span class="material-symbols-outlined text-secondary mb-2">verified_user</span>
+<span class="font-label-md text-label-md text-secondary uppercase">Kepercayaan</span>
+<span class="font-headline-md text-headline-md font-bold">100%</span>
+<p class="font-body-md text-body-md opacity-70">Aman &amp; Terenkripsi</p>
+</div>
+</div>
+</div>
+<!-- Registration Form Card -->
+<div class="w-full md:w-[480px] glass-card rounded-3xl p-lg md:p-xl shadow-xl border border-white/40 ring-1 ring-on-background/5">
+<!-- Header for Mobile -->
+<div class="md:hidden flex flex-col items-center mb-lg text-center">
+<div class="p-3 bg-primary-container rounded-full mb-md">
+<span class="material-symbols-outlined text-on-primary-container text-3xl">health_and_safety</span>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-background">Daftar Akun Baru</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Lengkapi data diri Anda sebagai mitra kesehatan</p>
+</div>
+<form class="space-y-md" onsubmit="return false;">
+<!-- Role Selection -->
+<div class="space-y-sm">
+<label class="font-label-md text-label-md text-on-surface-variant">PERAN PROFESIONAL</label>
+<div class="grid grid-cols-2 gap-sm">
+<label class="relative cursor-pointer group">
+<input checked="" class="peer sr-only" name="role" type="radio" value="dokter"/>
+<div class="flex items-center justify-center gap-sm p-3 border-2 border-outline-variant rounded-xl peer-checked:border-primary peer-checked:bg-primary-container/10 transition-all duration-200 group-hover:bg-surface-container-high">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">stethoscope</span>
+<span class="font-label-md text-label-md text-on-background">Dokter</span>
+</div>
+</label>
+<label class="relative cursor-pointer group">
+<input class="peer sr-only" name="role" type="radio" value="perawat"/>
+<div class="flex items-center justify-center gap-sm p-3 border-2 border-outline-variant rounded-xl peer-checked:border-primary peer-checked:bg-primary-container/10 transition-all duration-200 group-hover:bg-surface-container-high">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">medical_information</span>
+<span class="font-label-md text-label-md text-on-background">Perawat</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Input Fields -->
+<div class="space-y-sm">
+<div class="group relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant group-focus-within:text-primary transition-colors">person</span>
+<input class="w-full pl-12 pr-4 py-3 bg-surface-container-lowest border-outline-variant border rounded-xl font-body-md input-focus-ring focus:border-primary transition-all" placeholder="Nama Lengkap (Sesuai STR)" required="" type="text"/>
+</div>
+<div class="group relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant group-focus-within:text-primary transition-colors">mail</span>
+<input class="w-full pl-12 pr-4 py-3 bg-surface-container-lowest border-outline-variant border rounded-xl font-body-md input-focus-ring focus:border-primary transition-all" placeholder="Email Aktif" required="" type="email"/>
+</div>
+<div class="group relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant group-focus-within:text-primary transition-colors">call</span>
+<input class="w-full pl-12 pr-4 py-3 bg-surface-container-lowest border-outline-variant border rounded-xl font-body-md input-focus-ring focus:border-primary transition-all" placeholder="Nomor Telepon / WhatsApp" required="" type="tel"/>
+</div>
+<div class="group relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant group-focus-within:text-primary transition-colors">lock</span>
+<input class="w-full pl-12 pr-12 py-3 bg-surface-container-lowest border-outline-variant border rounded-xl font-body-md input-focus-ring focus:border-primary transition-all" placeholder="Password" required="" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant hover:text-on-background transition-colors" type="button">visibility</button>
+</div>
+</div>
+<!-- Document Upload -->
+<div class="space-y-sm pt-sm">
+<label class="font-label-md text-label-md text-on-surface-variant">DOKUMEN LEGALITAS</label>
+<div class="relative group">
+<input accept=".pdf,.jpg,.png" class="hidden" id="file-upload" type="file"/>
+<label class="flex flex-col items-center justify-center p-md border-2 border-dashed border-outline-variant rounded-2xl hover:border-primary hover:bg-primary/5 transition-all cursor-pointer" for="file-upload">
+<span class="material-symbols-outlined text-3xl text-primary mb-1">cloud_upload</span>
+<span class="font-label-md text-label-md text-on-surface text-center">Upload STR / SIP</span>
+<span class="font-body-md text-body-md text-outline-variant text-[10px] uppercase">Format: PDF, JPG, PNG (Max 5MB)</span>
+</label>
+</div>
+</div>
+<!-- Submit Button -->
+<button class="w-full py-4 bg-primary text-on-primary font-headline-md text-headline-md rounded-2xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-sm" type="submit">
+                    Daftar
+                    <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<!-- Footer Links -->
+<div class="text-center pt-md">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Sudah punya akun? 
+                        <a class="text-primary font-bold hover:underline" href="#">Masuk di sini</a>
+</p>
+<p class="font-label-md text-[10px] text-outline-variant mt-lg leading-relaxed">
+                        Dengan mendaftar, Anda menyetujui <span class="underline">Ketentuan Layanan</span> dan <span class="underline">Kebijakan Privasi</span> kami untuk perlindungan data medis.
+                    </p>
+</div>
+</form>
+</div>
+</main>
+<!-- Footer Identity (Desktop only) -->
+<div class="hidden md:flex fixed bottom-8 left-margin-tablet items-center gap-sm opacity-50">
+<span class="font-label-md text-label-md uppercase tracking-widest text-on-background">© 2024 HOMECARE PRO INTERNATIONAL</span>
+</div>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Form feedback and interactions
+        const form = document.querySelector('form');
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        submitBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const originalContent = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = `
+                <div class="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Menyimpan...
+            `;
+            submitBtn.disabled = true;
+
+            // Simulate loading
+            setTimeout(() => {
+                submitBtn.innerHTML = `
+                    <span class="material-symbols-outlined">check_circle</span>
+                    Pendaftaran Berhasil
+                `;
+                submitBtn.classList.remove('bg-primary');
+                submitBtn.classList.add('bg-green-600');
+                
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalContent;
+                    submitBtn.classList.add('bg-primary');
+                    submitBtn.classList.remove('bg-green-600');
+                    submitBtn.disabled = false;
+                }, 3000);
+            }, 1500);
+        });
+
+        // Toggle Password visibility
+        const togglePass = document.querySelector('button.absolute.right-4');
+        const passInput = document.querySelector('input[type="password"]');
+        
+        togglePass.addEventListener('click', () => {
+            const isPass = passInput.type === 'password';
+            passInput.type = isPass ? 'text' : 'password';
+            togglePass.textContent = isPass ? 'visibility_off' : 'visibility';
+        });
+
+        // File name update simulation
+        const fileInput = document.getElementById('file-upload');
+        const fileLabelText = document.querySelector('label[for="file-upload"] span:nth-child(2)');
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                fileLabelText.textContent = e.target.files[0].name;
+                fileLabelText.classList.add('text-primary', 'font-bold');
+            }
+        });
+    </script>
+</body></html>

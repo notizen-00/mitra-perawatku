@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+
+<html class="light" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Homecare Pro - Order Detail & Live Tracking</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#001a42",
+                    "secondary-fixed-dim": "#adc6ff",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#07006c",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#c0c1ff",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#cbdbf5",
+                    "primary-container": "#10b981",
+                    "primary-fixed-dim": "#4edea3",
+                    "secondary-fixed": "#d8e2ff",
+                    "primary": "#006c49",
+                    "surface": "#f8f9ff",
+                    "on-tertiary-fixed-variant": "#2f2ebe",
+                    "on-surface": "#0b1c30",
+                    "inverse-primary": "#4edea3",
+                    "surface-container-low": "#eff4ff",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#006c49",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-background": "#0b1c30",
+                    "tertiary": "#494bd6",
+                    "outline": "#6c7a71",
+                    "tertiary-fixed": "#e1e0ff",
+                    "secondary": "#0058be",
+                    "on-secondary-fixed-variant": "#004395",
+                    "on-primary-container": "#00422b",
+                    "surface-container": "#e5eeff",
+                    "primary-fixed": "#6ffbbe",
+                    "on-primary-fixed": "#002113",
+                    "secondary-container": "#2170e4",
+                    "tertiary-container": "#9699ff",
+                    "on-tertiary-container": "#1d17b2",
+                    "background": "#f8f9ff",
+                    "surface-container-highest": "#d3e4fe",
+                    "surface-container-high": "#dce9ff",
+                    "on-error": "#ffffff",
+                    "on-secondary-container": "#fefcff",
+                    "on-surface-variant": "#3c4a42",
+                    "inverse-surface": "#213145",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#d3e4fe",
+                    "surface-bright": "#f8f9ff",
+                    "on-error-container": "#93000a",
+                    "outline-variant": "#bbcabf",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#005236"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "gutter": "16px",
+                    "margin-tablet": "32px",
+                    "lg": "24px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "data-mono": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        .map-gradient-overlay {
+            background: linear-gradient(to bottom, rgba(248, 249, 255, 0.4) 0%, rgba(248, 249, 255, 0) 20%, rgba(248, 249, 255, 0) 80%, rgba(248, 249, 255, 1) 100%);
+        }
+        .route-path {
+            stroke-dasharray: 8;
+            animation: dash 30s linear infinite;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: -1000; }
+        }
+        .pulse-effect {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .7; transform: scale(1.1); }
+        }
+        body {
+            overscroll-behavior-y: contain;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Bar -->
+<header class="bg-surface shadow-sm fixed top-0 z-50 flex justify-between items-center px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Live Tracking</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-md font-label-md text-primary bg-primary-container px-3 py-1 rounded-full">AKTIF</span>
+<span class="material-symbols-outlined text-on-surface-variant">more_vert</span>
+</div>
+</header>
+<main class="pt-16 pb-20 min-h-screen flex flex-col">
+<!-- Interactive Map Section -->
+<section class="relative w-full h-[397px] overflow-hidden bg-surface-dim">
+<!-- Simulated Map Canvas -->
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center" data-alt="A high-angle realistic aerial 3D map view of a clean, modern suburban residential area in Jakarta. The map shows simplified minimalist road networks with soft-colored buildings and green trees. A bright cyan-colored glowing path marks a route between two points. The lighting is bright daylight with a professional corporate medical aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA0PMlxIpfJnS9Y_sUorBtoejiGbOWLM8gpVDDucwEySSHI2t3VG0WXGlTF-QOrXTv9Tr67PjZcLGXkz8cAqL3oaS85S5k8Ry0DiREDdDjpZ72-EtRFZq8NJsR1iFZ7Km7ZFL7WxLUxS2YZO0YYfecFbAF5yHq3EJBLs0BVfqtW1zD96Hk_pvLvjjoApHm2uH5joewxBMBpJrhO9k5eMpjBZHGDJiJDyn08lP0lyrWCx9fSswoFTeKQnDpPi0QbRoMW9geRGpw7wHI')"></div>
+<!-- SVG Overlay for Route & Markers -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" viewbox="0 0 400 400">
+<!-- Dashed Route Path -->
+<path class="route-path opacity-80" d="M 80,320 Q 150,280 200,200 T 320,80" fill="none" stroke="#0058be" stroke-linecap="round" stroke-width="4"></path>
+<!-- 'Saya' Marker (Start) -->
+<circle class="pulse-effect" cx="80" cy="320" fill="#0058be" r="10"></circle>
+<circle class="pulse-effect" cx="80" cy="320" fill="#0058be" opacity="0.2" r="18"></circle>
+<g transform="translate(65, 280)">
+<rect fill="#0058be" height="20" rx="4" width="36"></rect>
+<text fill="white" font-family="Inter" font-size="10" font-weight="600" text-anchor="middle" x="18" y="14">SAYA</text>
+</g>
+<!-- Medical Icon on Path -->
+<g transform="translate(190, 190)">
+<circle fill="#10b981" r="14"></circle>
+<text fill="white" font-family="Material Symbols Outlined" font-size="16" text-anchor="middle" x="0" y="5">medical_services</text>
+</g>
+<!-- 'Pasien' Marker (Destination) -->
+<path d="M320 50 L328 65 H312 Z" fill="#ba1a1a"></path>
+<circle cx="320" cy="80" fill="#ba1a1a" r="8"></circle>
+<g transform="translate(300, 95)">
+<rect fill="#ba1a1a" height="20" rx="4" width="45"></rect>
+<text fill="white" font-family="Inter" font-size="10" font-weight="600" text-anchor="middle" x="22.5" y="14">PASIEN</text>
+</g>
+</svg>
+</div>
+<div class="absolute inset-0 map-gradient-overlay pointer-events-none"></div>
+<!-- Map Controls -->
+<div class="absolute right-4 top-4 flex flex-col gap-2">
+<button class="w-10 h-10 bg-surface shadow-md rounded-lg flex items-center justify-center hover:bg-surface-container active:scale-95 transition-all">
+<span class="material-symbols-outlined text-on-surface">my_location</span>
+</button>
+<button class="w-10 h-10 bg-surface shadow-md rounded-lg flex items-center justify-center hover:bg-surface-container active:scale-95 transition-all">
+<span class="material-symbols-outlined text-on-surface">layers</span>
+</button>
+</div>
+</section>
+<!-- Dynamic Content Area -->
+<div class="flex-1 px-margin-mobile -mt-12 relative z-10">
+<!-- ETA Floating Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant p-md mb-md flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-container/10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[28px] filled-icon" style="font-variation-settings: 'FILL' 1;">timer</span>
+</div>
+<div>
+<p class="text-label-md font-label-md text-on-surface-variant">ESTIMASI KEDATANGAN</p>
+<h2 class="text-headline-md font-headline-md font-bold text-primary">12 Menit</h2>
+</div>
+</div>
+<div class="h-10 w-[1px] bg-outline-variant"></div>
+<div class="text-right">
+<p class="text-label-md font-label-md text-on-surface-variant">JARAK</p>
+<p class="text-body-lg font-body-lg font-bold text-on-surface">4.2 KM</p>
+</div>
+</div>
+<!-- Patient Info Card -->
+<div class="bg-surface-container-low rounded-xl border border-outline-variant p-md mb-md">
+<div class="flex justify-between items-start mb-md">
+<div class="flex gap-4">
+<div class="w-14 h-14 rounded-full overflow-hidden border-2 border-primary-container">
+<img class="w-full h-full object-cover" data-alt="A warm, professional portrait of an elderly Indonesian man in his 70s, looking kind and calm, with short gray hair. He is wearing a simple domestic shirt. Soft indoor clinical lighting with a blurred living room background. The aesthetic is clean, empathetic, and reliable." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXk6omLke4jENgNrk_2L94p3yZaUCTFhFj0vZo94VlCpZObRbKY-6FWKCrAsniCxZlWWRk9mHtH4JxOrUxUu9-u3W85FpC4j5eCMvfGNEKjomqrO8YVl74GbyhmqN2qM0lb8kfqqlxDzKBrftaJJDrLKskDFlfAdlAsPHI5ax1Qpz1qNWJi9tDA9lgSU239gsW8MjMXaDPspIil8Ma1Q21ro5qHFqzqvx5jTLoeBVSqJLhovwDL_0jKyf3zPkkVOGphdHevMidYgE"/>
+</div>
+<div>
+<h3 class="text-body-lg font-body-lg font-bold text-on-surface">Bpk. Budi</h3>
+<p class="text-body-md font-body-md text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">medical_information</span>
+                                Layanan: Infus
+                            </p>
+</div>
+</div>
+<span class="bg-tertiary/10 text-tertiary px-3 py-1 rounded-full text-label-md font-label-md">DIPRIORITASKAN</span>
+</div>
+<!-- Action Buttons Cluster -->
+<div class="grid grid-cols-3 gap-sm">
+<button class="flex flex-col items-center justify-center gap-1 py-3 bg-surface hover:bg-surface-container-high border border-outline-variant rounded-lg transition-all active:scale-95 group">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">chat</span>
+<span class="text-label-md font-label-md text-on-surface">Chat</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 py-3 bg-surface hover:bg-surface-container-high border border-outline-variant rounded-lg transition-all active:scale-95 group">
+<span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform">call</span>
+<span class="text-label-md font-label-md text-on-surface">Call</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 py-3 bg-secondary-container text-white rounded-lg hover:shadow-md transition-all active:scale-95 group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">directions</span>
+<span class="text-label-md font-label-md">Navigate</span>
+</button>
+</div>
+</div>
+<!-- Timeline Aktivitas Section -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-md mb-xl">
+<h4 class="text-headline-md font-headline-md font-bold text-on-surface mb-md">Timeline Aktivitas</h4>
+<div class="relative pl-8 space-y-lg">
+<!-- Connecting Line -->
+<div class="absolute left-[11px] top-2 bottom-2 w-[2px] bg-outline-variant"></div>
+<!-- Step 1 (Completed) -->
+<div class="relative">
+<div class="absolute -left-[29px] top-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center z-10 border-4 border-surface">
+<span class="material-symbols-outlined text-[14px] text-white font-bold">check</span>
+</div>
+<div>
+<p class="text-body-md font-bold text-on-surface">Order Diterima</p>
+<p class="text-label-md text-on-surface-variant">Pukul 08:30 WIB • Menunggu konfirmasi perawat</p>
+</div>
+</div>
+<!-- Step 2 (Active) -->
+<div class="relative">
+<div class="absolute -left-[29px] top-1 w-6 h-6 rounded-full bg-secondary flex items-center justify-center z-10 border-4 border-surface ring-4 ring-secondary/10">
+<div class="w-2 h-2 bg-white rounded-full pulse-effect"></div>
+</div>
+<div>
+<p class="text-body-md font-bold text-secondary">Berangkat</p>
+<p class="text-label-md text-on-surface-variant">Pukul 09:15 WIB • Perawat dalam perjalanan</p>
+</div>
+</div>
+<!-- Step 3 (Pending) -->
+<div class="relative">
+<div class="absolute -left-[29px] top-1 w-6 h-6 rounded-full bg-outline-variant flex items-center justify-center z-10 border-4 border-surface">
+</div>
+<div class="opacity-50">
+<p class="text-body-md font-bold text-on-surface">Tiba di Lokasi</p>
+<p class="text-label-md text-on-surface-variant">Estimasi 09:42 WIB</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Contextual) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 pb-safe bg-surface-container shadow-lg rounded-t-xl md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-highest transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined filled-icon" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="font-label-md text-label-md">Schedule</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-highest transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-md text-label-md">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-highest transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple Interaction: Simulate GPS updates
+        document.addEventListener('DOMContentLoaded', () => {
+            const etaElement = document.querySelector('h2.text-primary');
+            let minutes = 12;
+
+            const interval = setInterval(() => {
+                if (minutes > 5) {
+                    minutes--;
+                    etaElement.textContent = `${minutes} Menit`;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 60000); // Update every minute
+
+            // Click effect for Navigate
+            const navBtn = document.querySelector('.bg-secondary-container');
+            navBtn.addEventListener('click', () => {
+                navBtn.innerHTML = `
+                    <span class="material-symbols-outlined animate-spin">sync</span>
+                    <span class="text-label-md font-label-md">Opening Maps...</span>
+                `;
+                setTimeout(() => {
+                    navBtn.innerHTML = `
+                        <span class="material-symbols-outlined">directions</span>
+                        <span class="text-label-md font-label-md">Navigate</span>
+                    `;
+                }, 2000);
+            });
+        });
+    </script>
+</body></html>
