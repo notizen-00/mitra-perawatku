@@ -1,11 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mitra_perawatku/app.dart';
+import 'package:mitra_perawatku/core/di/injection_container.dart';
 
 void main() {
-  testWidgets('app loads with Perawatku Mitra home screen', (tester) async {
+  testWidgets('app loads with Mitra login screen', (tester) async {
+    await init();
     await tester.pumpWidget(const App());
+    await tester.pump();
 
-    expect(find.text('Perawatku Mitra'), findsOneWidget);
-    expect(find.text('Siap menerima layanan kesehatan'), findsOneWidget);
+    expect(find.text('Masuk Mitra'), findsOneWidget);
+    expect(find.text('Login'), findsOneWidget);
+    expect(find.text('Daftar sebagai mitra'), findsOneWidget);
   });
 }

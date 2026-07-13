@@ -34,12 +34,10 @@ class AppTheme {
       errorContainer: AppColors.errorContainer,
       onErrorContainer: AppColors.onErrorContainer,
       surface: AppColors.surface,
-      background: AppColors.background,
       outline: AppColors.outline,
       outlineVariant: AppColors.outlineVariant,
       onSurface: AppColors.onSurface,
       onSurfaceVariant: AppColors.onSurfaceVariant,
-      onBackground: AppColors.onBackground,
       inverseSurface: AppColors.inverseSurface,
       onInverseSurface: AppColors.inverseOnSurface,
       inversePrimary: AppColors.inversePrimary,
@@ -130,5 +128,4 @@ class AppTheme {
       ),
     ),
   );
-
 }

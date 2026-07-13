@@ -2,37 +2,143 @@ import 'package:equatable/equatable.dart';
 
 class HomeSummary extends Equatable {
   const HomeSummary({
-    required this.title,
-    required this.subtitle,
+    required this.partnerName,
+    required this.profession,
+    required this.verificationStatus,
     required this.activeOrders,
     required this.todayIncome,
     required this.todayOrders,
     required this.rating,
-    required this.upcomingSchedule,
-    required this.recentActivity,
+    required this.walletBalance,
+    required this.pendingIncome,
+    required this.unreadNotifications,
     required this.isAvailable,
+    required this.activeService,
+    required this.incomingOrders,
+    required this.todaySchedules,
+    required this.recentActivities,
   });
 
-  final String title;
-  final String subtitle;
+  final String partnerName;
+  final String profession;
+  final String verificationStatus;
   final int activeOrders;
   final double todayIncome;
   final int todayOrders;
   final double rating;
-  final String upcomingSchedule;
-  final String recentActivity;
+  final double walletBalance;
+  final double pendingIncome;
+  final int unreadNotifications;
   final bool isAvailable;
+  final ActiveService activeService;
+  final List<PartnerOrder> incomingOrders;
+  final List<ScheduleItem> todaySchedules;
+  final List<ActivityItem> recentActivities;
 
   @override
   List<Object?> get props => [
-    title,
-    subtitle,
+    partnerName,
+    profession,
+    verificationStatus,
     activeOrders,
     todayIncome,
     todayOrders,
     rating,
-    upcomingSchedule,
-    recentActivity,
     isAvailable,
+    walletBalance,
+    pendingIncome,
+    unreadNotifications,
+    activeService,
+    incomingOrders,
+    todaySchedules,
+    recentActivities,
   ];
+}
+
+class ActiveService extends Equatable {
+  const ActiveService({
+    required this.title,
+    required this.status,
+    required this.patientName,
+    required this.etaMinutes,
+    required this.distanceKm,
+  });
+
+  final String title;
+  final String status;
+  final String patientName;
+  final int etaMinutes;
+  final double distanceKm;
+
+  @override
+  List<Object?> get props => [title, status, patientName, etaMinutes, distanceKm];
+}
+
+class PartnerOrder extends Equatable {
+  const PartnerOrder({
+    required this.id,
+    required this.bookingCode,
+    required this.patientName,
+    required this.serviceName,
+    required this.status,
+    required this.scheduledAt,
+    required this.distanceKm,
+    required this.totalAmount,
+    required this.paymentStatus,
+  });
+
+  final int id;
+  final String bookingCode;
+  final String patientName;
+  final String serviceName;
+  final String status;
+  final String scheduledAt;
+  final double distanceKm;
+  final double totalAmount;
+  final String paymentStatus;
+
+  @override
+  List<Object?> get props => [
+    id,
+    bookingCode,
+    patientName,
+    serviceName,
+    status,
+    scheduledAt,
+    distanceKm,
+    totalAmount,
+    paymentStatus,
+  ];
+}
+
+class ScheduleItem extends Equatable {
+  const ScheduleItem({
+    required this.time,
+    required this.title,
+    required this.caption,
+    required this.isCurrent,
+  });
+
+  final String time;
+  final String title;
+  final String caption;
+  final bool isCurrent;
+
+  @override
+  List<Object?> get props => [time, title, caption, isCurrent];
+}
+
+class ActivityItem extends Equatable {
+  const ActivityItem({
+    required this.title,
+    required this.caption,
+    required this.type,
+  });
+
+  final String title;
+  final String caption;
+  final String type;
+
+  @override
+  List<Object?> get props => [title, caption, type];
 }

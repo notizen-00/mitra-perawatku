@@ -12,6 +12,21 @@ class ServerFailure extends Failure {
     : super(message ?? 'Terjadi masalah dari server.');
 }
 
+class NetworkFailure extends Failure {
+  const NetworkFailure([String? message])
+    : super(message ?? 'Koneksi internet bermasalah.');
+}
+
+class ValidationFailure extends Failure {
+  const ValidationFailure([String? message])
+    : super(message ?? 'Data yang dikirim belum valid.');
+}
+
+class UnauthorizedFailure extends Failure {
+  const UnauthorizedFailure([String? message])
+    : super(message ?? 'Sesi Anda berakhir. Silakan login kembali.');
+}
+
 class CacheFailure extends Failure {
   const CacheFailure([String? message])
     : super(message ?? 'Gagal membaca data lokal.');
