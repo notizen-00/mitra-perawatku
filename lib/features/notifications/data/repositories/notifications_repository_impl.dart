@@ -23,7 +23,14 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         },
       );
 
-      return jsonList(response).map(_notification).toList();
+      final notifications = jsonList(response).map(_notification).toList();
+      final userId = _session.userId;
+
+      if (userId == null) return notifications;
+
+      return notifications
+          .where((notification) => notification.userId == userId)
+          .toList();
     } on ApiException catch (error) {
       throw ServerFailure(error.message);
     }

@@ -35,6 +35,42 @@ class HomeSummary extends Equatable {
   final List<ScheduleItem> todaySchedules;
   final List<ActivityItem> recentActivities;
 
+  HomeSummary copyWith({
+    String? partnerName,
+    String? profession,
+    String? verificationStatus,
+    int? activeOrders,
+    double? todayIncome,
+    int? todayOrders,
+    double? rating,
+    double? walletBalance,
+    double? pendingIncome,
+    int? unreadNotifications,
+    bool? isAvailable,
+    ActiveService? activeService,
+    List<PartnerOrder>? incomingOrders,
+    List<ScheduleItem>? todaySchedules,
+    List<ActivityItem>? recentActivities,
+  }) {
+    return HomeSummary(
+      partnerName: partnerName ?? this.partnerName,
+      profession: profession ?? this.profession,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
+      activeOrders: activeOrders ?? this.activeOrders,
+      todayIncome: todayIncome ?? this.todayIncome,
+      todayOrders: todayOrders ?? this.todayOrders,
+      rating: rating ?? this.rating,
+      walletBalance: walletBalance ?? this.walletBalance,
+      pendingIncome: pendingIncome ?? this.pendingIncome,
+      unreadNotifications: unreadNotifications ?? this.unreadNotifications,
+      isAvailable: isAvailable ?? this.isAvailable,
+      activeService: activeService ?? this.activeService,
+      incomingOrders: incomingOrders ?? this.incomingOrders,
+      todaySchedules: todaySchedules ?? this.todaySchedules,
+      recentActivities: recentActivities ?? this.recentActivities,
+    );
+  }
+
   @override
   List<Object?> get props => [
     partnerName,

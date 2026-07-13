@@ -20,6 +20,8 @@ import '../../features/notifications/domain/usecases/mark_notification_read.dart
 import '../../features/notifications/presentation/cubit/notifications_cubit.dart';
 import '../../features/orders/data/repositories/orders_repository_impl.dart';
 import '../../features/orders/domain/repositories/orders_repository.dart';
+import '../../features/orders/domain/usecases/accept_service_booking.dart';
+import '../../features/orders/domain/usecases/decline_service_booking.dart';
 import '../../features/orders/domain/usecases/get_order_detail.dart';
 import '../../features/orders/domain/usecases/get_orders.dart';
 import '../../features/orders/presentation/bloc/order_detail_bloc.dart';
@@ -27,6 +29,7 @@ import '../../features/orders/presentation/cubit/orders_cubit.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/profile/domain/usecases/get_profile.dart';
+import '../../features/profile/domain/usecases/update_partner_availability.dart';
 import '../../features/profile/presentation/cubit/profile_cubit.dart';
 import '../../features/services/data/repositories/partner_services_repository_impl.dart';
 import '../../features/services/domain/repositories/partner_services_repository.dart';
@@ -42,6 +45,7 @@ import '../../features/wallet/domain/usecases/get_wallet_summary.dart';
 import '../../features/wallet/presentation/cubit/wallet_cubit.dart';
 import '../network/api_client.dart';
 import '../services/auth_session.dart';
+import '../services/fcm_push_service.dart';
 import '../services/partner_location_sync_service.dart';
 import '../services/reverb_websocket_service.dart';
 
@@ -58,6 +62,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AuthSession(sl<FlutterSecureStorage>()));
   await sl<AuthSession>().restore();
   sl.registerLazySingleton(() => ApiClient(sl<AuthSession>()));
+  sl.registerLazySingleton(() => FcmPushService());
   sl.registerLazySingleton(() => PartnerLocationSyncService(sl<ApiClient>()));
   sl.registerLazySingleton(
     () => ReverbWebSocketService(sl<ApiClient>(), sl<AuthSession>()),
@@ -80,10 +85,14 @@ Future<void> init() async {
     () => HomeRepositoryImpl(sl<ApiClient>(), sl<AuthSession>()),
   );
   sl.registerLazySingleton(() => GetHomeSummary(sl<HomeRepository>()));
+  sl.registerLazySingleton(
+    () => UpdatePartnerAvailability(sl<ProfileRepository>()),
+  );
   sl.registerFactory(
     () => HomeCubit(
       sl<GetHomeSummary>(),
       sl<ReverbWebSocketService>(),
+      sl<UpdatePartnerAvailability>(),
     ),
   );
 
@@ -92,6 +101,8 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => GetOrders(sl<OrdersRepository>()));
   sl.registerLazySingleton(() => GetOrderDetail(sl<OrdersRepository>()));
+  sl.registerLazySingleton(() => AcceptServiceBooking(sl<OrdersRepository>()));
+  sl.registerLazySingleton(() => DeclineServiceBooking(sl<OrdersRepository>()));
   sl.registerFactory(() => OrdersCubit(sl<GetOrders>()));
   sl.registerFactory(() => OrderDetailBloc(sl<GetOrderDetail>()));
 

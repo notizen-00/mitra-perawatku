@@ -61,6 +61,32 @@ class OrdersRepositoryImpl implements OrdersRepository {
     }
   }
 
+  @override
+  Future<OrderDetail> acceptServiceBooking(int id) async {
+    try {
+      final response = await _apiClient.patch(
+        ApiEndpoints.acceptServiceBooking(id),
+        body: {'notes': ''},
+      );
+      return _detail(jsonObject(response['data']) ?? response);
+    } on ApiException catch (error) {
+      throw ServerFailure(error.message);
+    }
+  }
+
+  @override
+  Future<OrderDetail> declineServiceBooking(int id) async {
+    try {
+      final response = await _apiClient.patch(
+        ApiEndpoints.serviceBookingStatus(id),
+        body: {'status': 'cancelled', 'notes': ''},
+      );
+      return _detail(jsonObject(response['data']) ?? response);
+    } on ApiException catch (error) {
+      throw ServerFailure(error.message);
+    }
+  }
+
   String _displayDate(Object? value) {
     final date = DateTime.tryParse(value?.toString() ?? '')?.toLocal();
     if (date == null) return '-';

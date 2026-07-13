@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../di/injection_container.dart';
@@ -15,7 +16,10 @@ import '../../features/stitch_ui/presentation/pages/stitch_pages.dart';
 import '../../features/tracking/presentation/pages/tracking_page.dart';
 import '../../features/wallet/presentation/pages/wallet_page.dart';
 
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouter = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: '/login',
   redirect: (context, state) {
     if (!sl.isRegistered<AuthSession>()) return null;

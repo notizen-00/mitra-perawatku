@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'core/realtime/realtime_listener.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
@@ -8,12 +9,14 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Perawatku Mitra',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      themeMode: ThemeMode.light,
-      routerConfig: appRouter,
+    return RealtimeListener(
+      child: MaterialApp.router(
+        title: 'Perawatku Mitra',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        themeMode: ThemeMode.light,
+        routerConfig: appRouter,
+      ),
     );
   }
 }

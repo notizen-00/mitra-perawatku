@@ -59,12 +59,7 @@ class _OrderDetailView extends StatelessWidget {
                   SliverPadding(
                     padding: AppSpacing.screen,
                     sliver: SliverToBoxAdapter(
-                      child: ErrorCard(
-                        message: message,
-                        onRetry: () => context
-                            .read<OrderDetailBloc>()
-                            .add(OrderDetailRequested(orderId)),
-                      ),
+                      child: _OrderLoadError(message: message),
                     ),
                   ),
                 ],
@@ -662,6 +657,44 @@ class _Loading extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _OrderLoadError extends StatelessWidget {
+  const _OrderLoadError({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return MedicalCard(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, color: colors.onSurfaceVariant),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'Pesanan tidak dapat dibuka',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(message, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: AppSpacing.lg),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: FilledButton.icon(
+              onPressed: () => context.go('/orders'),
+              icon: const Icon(Icons.assignment_outlined),
+              label: const Text('Lihat daftar pesanan'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -38,7 +38,9 @@ class HomeRepositoryImpl implements HomeRepository {
       );
 
       final bookings = _extractList(bookingsResponse);
-      final notifications = _extractList(notificationResponse);
+      final notifications = _extractList(notificationResponse)
+          .where((item) => _asInt(item['user_id']) == user.id)
+          .toList();
       final profile = user.partnerProfile;
 
       return HomeSummary(

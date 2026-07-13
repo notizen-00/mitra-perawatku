@@ -44,6 +44,13 @@ class _NotificationsViewState extends State<_NotificationsView> {
               : const <AppNotification>[];
           final unreadCount = notifications.where((item) => !item.isRead).length;
 
+          final counts = <NotificationCategory?, int>{};
+          for (final category in NotificationCategory.values) {
+            counts[category] =
+                notifications.where((item) => item.category == category).length;
+          }
+          counts[null] = notifications.length;
+
           return CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
@@ -53,6 +60,7 @@ class _NotificationsViewState extends State<_NotificationsView> {
                 delegate: _FilterHeaderDelegate(
                   selected: _filter,
                   onChanged: (value) => setState(() => _filter = value),
+                  counts: counts,
                 ),
               ),
               SliverPadding(
@@ -156,10 +164,15 @@ class _AppBar extends StatelessWidget {
 }
 
 class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
-  const _FilterHeaderDelegate({required this.selected, required this.onChanged});
+  const _FilterHeaderDelegate({
+    required this.selected,
+    required this.onChanged,
+    required this.counts,
+  });
 
   final NotificationCategory? selected;
   final ValueChanged<NotificationCategory?> onChanged;
+  final Map<NotificationCategory?, int> counts;
 
   static const List<(NotificationCategory?, String)> _options = [
     (null, 'Semua'),
@@ -198,9 +211,39 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
           itemBuilder: (context, index) {
             final (category, label) = _options[index];
             final isSelected = category == selected;
+            final count = counts[category] ?? 0;
+            final badgeColor = category == null
+                ? colors.primary
+                : _categoryStyle(context, category).$3;
 
             return ChoiceChip(
-              label: Text(label),
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? colors.onPrimary.withValues(alpha: 0.22)
+                          : badgeColor.withValues(alpha: 0.14),
+                      borderRadius: AppRadius.chip,
+                    ),
+                    child: Text(
+                      '$count',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: isSelected ? colors.onPrimary : badgeColor,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
               selected: isSelected,
               onSelected: (_) => onChanged(category),
               showCheckmark: false,
@@ -230,7 +273,8 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_FilterHeaderDelegate oldDelegate) {
-    return oldDelegate.selected != selected;
+    return oldDelegate.selected != selected ||
+        oldDelegate.counts != counts;
   }
 }
 

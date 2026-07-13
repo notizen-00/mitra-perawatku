@@ -29,4 +29,16 @@ class ProfileRepositoryImpl implements ProfileRepository {
       throw ServerFailure(error.message);
     }
   }
+
+  @override
+  Future<void> updateAvailability(bool isAvailable) async {
+    try {
+      await _apiClient.patch(
+        ApiEndpoints.mitraProfile,
+        body: {'is_available': isAvailable},
+      );
+    } on ApiException catch (error) {
+      throw ServerFailure(error.message);
+    }
+  }
 }
