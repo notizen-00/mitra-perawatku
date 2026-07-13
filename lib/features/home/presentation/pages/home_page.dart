@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/reverb_websocket_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -41,6 +42,7 @@ class _HomeView extends StatelessWidget {
             icon: const Icon(Icons.layers_outlined),
             label: const Text('Mockup'),
           ),
+          const _ConnectionStatusIndicator(),
           BlocBuilder<HomeCubit, HomeState>(
             builder: (context, state) {
               final count = state is HomeLoaded
@@ -702,6 +704,73 @@ class _VerificationChip extends StatelessWidget {
   }
 }
 
+class _ConnectionStatusIndicator extends StatelessWidget {
+  const _ConnectionStatusIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    final service = sl<ReverbWebSocketService>();
+    final colors = Theme.of(context).colorScheme;
+
+    return StreamBuilder<ReverbConnectionState>(
+      stream: service.connectionState,
+      initialData: service.state,
+      builder: (context, snapshot) {
+        final state = snapshot.data ?? ReverbConnectionState.disconnected;
+
+        final (label, color, icon) = switch (state) {
+          ReverbConnectionState.connected => (
+            'WebSocket Connected',
+            colors.primary,
+            Icons.cloud_done_rounded,
+          ),
+          ReverbConnectionState.connecting => (
+            'Menghubungkan...',
+            colors.tertiary,
+            Icons.cloud_sync_rounded,
+          ),
+          ReverbConnectionState.error => (
+            'Koneksi Error',
+            colors.error,
+            Icons.cloud_off_rounded,
+          ),
+          ReverbConnectionState.disconnected => (
+            'Terputus',
+            colors.outline,
+            Icons.cloud_off_outlined,
+          ),
+        };
+
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: AppRadius.chip,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: 4,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color, size: 16),
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(color: color),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _NotificationButton extends StatelessWidget {
   const _NotificationButton({required this.count});
 
@@ -713,7 +782,7 @@ class _NotificationButton extends StatelessWidget {
       isLabelVisible: count > 0,
       label: Text('$count'),
       child: IconButton(
-        onPressed: () {},
+        onPressed: () => context.go('/notifications'),
         icon: const Icon(Icons.notifications_none_rounded),
       ),
     );

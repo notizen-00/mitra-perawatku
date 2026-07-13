@@ -11,6 +11,13 @@ import '../../features/home/data/repositories/home_repository_impl.dart';
 import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/domain/usecases/get_home_summary.dart';
 import '../../features/home/presentation/cubit/home_cubit.dart';
+import '../../features/notifications/data/repositories/notifications_repository_impl.dart';
+import '../../features/notifications/domain/repositories/notifications_repository.dart';
+import '../../features/notifications/domain/usecases/delete_notification.dart';
+import '../../features/notifications/domain/usecases/get_notifications.dart';
+import '../../features/notifications/domain/usecases/mark_all_notifications_read.dart';
+import '../../features/notifications/domain/usecases/mark_notification_read.dart';
+import '../../features/notifications/presentation/cubit/notifications_cubit.dart';
 import '../../features/orders/data/repositories/orders_repository_impl.dart';
 import '../../features/orders/domain/repositories/orders_repository.dart';
 import '../../features/orders/domain/usecases/get_order_detail.dart';
@@ -73,7 +80,12 @@ Future<void> init() async {
     () => HomeRepositoryImpl(sl<ApiClient>(), sl<AuthSession>()),
   );
   sl.registerLazySingleton(() => GetHomeSummary(sl<HomeRepository>()));
-  sl.registerFactory(() => HomeCubit(sl<GetHomeSummary>()));
+  sl.registerFactory(
+    () => HomeCubit(
+      sl<GetHomeSummary>(),
+      sl<ReverbWebSocketService>(),
+    ),
+  );
 
   sl.registerLazySingleton<OrdersRepository>(
     () => OrdersRepositoryImpl(sl<ApiClient>(), sl<AuthSession>()),
@@ -88,6 +100,30 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => GetWalletSummary(sl<WalletRepository>()));
   sl.registerFactory(() => WalletCubit(sl<GetWalletSummary>()));
+
+  sl.registerLazySingleton<NotificationsRepository>(
+    () => NotificationsRepositoryImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton(
+    () => GetNotifications(sl<NotificationsRepository>()),
+  );
+  sl.registerLazySingleton(
+    () => MarkNotificationRead(sl<NotificationsRepository>()),
+  );
+  sl.registerLazySingleton(
+    () => MarkAllNotificationsRead(sl<NotificationsRepository>()),
+  );
+  sl.registerLazySingleton(
+    () => DeleteNotification(sl<NotificationsRepository>()),
+  );
+  sl.registerFactory(
+    () => NotificationsCubit(
+      getNotifications: sl<GetNotifications>(),
+      markAsRead: sl<MarkNotificationRead>(),
+      markAllAsRead: sl<MarkAllNotificationsRead>(),
+      deleteNotification: sl<DeleteNotification>(),
+    ),
+  );
 
   sl.registerLazySingleton<PartnerServicesRepository>(
     () => PartnerServicesRepositoryImpl(sl<ApiClient>()),
