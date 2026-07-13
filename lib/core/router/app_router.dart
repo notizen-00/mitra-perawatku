@@ -5,9 +5,13 @@ import '../services/auth_session.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
-import '../../features/real_app/presentation/pages/real_pages.dart';
+import '../../features/orders/presentation/pages/orders_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/services/presentation/pages/partner_services_page.dart';
 import '../../features/stitch_ui/presentation/pages/mockup_hub_page.dart';
 import '../../features/stitch_ui/presentation/pages/stitch_pages.dart';
+import '../../features/tracking/presentation/pages/tracking_page.dart';
+import '../../features/wallet/presentation/pages/wallet_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/login',
@@ -39,26 +43,17 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(path: '/', builder: (context, state) => const LoginPage()),
     GoRoute(path: '/dashboard', builder: (context, state) => const HomePage()),
-    GoRoute(
-      path: '/orders',
-      builder: (context, state) => const RealOrdersPage(),
-    ),
+    GoRoute(path: '/orders', builder: (context, state) => const OrdersPage()),
     GoRoute(
       path: '/tracking',
-      builder: (context, state) => const RealTrackingPage(),
+      builder: (context, state) => const TrackingPage(),
     ),
-    GoRoute(
-      path: '/wallet',
-      builder: (context, state) => const RealWalletPage(),
-    ),
+    GoRoute(path: '/wallet', builder: (context, state) => const WalletPage()),
     GoRoute(
       path: '/services',
-      builder: (context, state) => const RealServicesPage(),
+      builder: (context, state) => const PartnerServicesPage(),
     ),
-    GoRoute(
-      path: '/profile',
-      builder: (context, state) => const RealProfilePage(),
-    ),
+    GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
     GoRoute(
       path: '/register',

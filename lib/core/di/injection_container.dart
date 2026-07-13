@@ -11,6 +11,26 @@ import '../../features/home/data/repositories/home_repository_impl.dart';
 import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/domain/usecases/get_home_summary.dart';
 import '../../features/home/presentation/cubit/home_cubit.dart';
+import '../../features/orders/data/repositories/orders_repository_impl.dart';
+import '../../features/orders/domain/repositories/orders_repository.dart';
+import '../../features/orders/domain/usecases/get_orders.dart';
+import '../../features/orders/presentation/cubit/orders_cubit.dart';
+import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/profile/domain/usecases/get_profile.dart';
+import '../../features/profile/presentation/cubit/profile_cubit.dart';
+import '../../features/services/data/repositories/partner_services_repository_impl.dart';
+import '../../features/services/domain/repositories/partner_services_repository.dart';
+import '../../features/services/domain/usecases/get_partner_services.dart';
+import '../../features/services/presentation/cubit/partner_services_cubit.dart';
+import '../../features/tracking/data/repositories/tracking_repository_impl.dart';
+import '../../features/tracking/domain/repositories/tracking_repository.dart';
+import '../../features/tracking/domain/usecases/get_active_tracking.dart';
+import '../../features/tracking/presentation/cubit/tracking_cubit.dart';
+import '../../features/wallet/data/repositories/wallet_repository_impl.dart';
+import '../../features/wallet/domain/repositories/wallet_repository.dart';
+import '../../features/wallet/domain/usecases/get_wallet_summary.dart';
+import '../../features/wallet/presentation/cubit/wallet_cubit.dart';
 import '../network/api_client.dart';
 import '../services/auth_session.dart';
 import '../services/reverb_websocket_service.dart';
@@ -50,4 +70,36 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => GetHomeSummary(sl<HomeRepository>()));
   sl.registerFactory(() => HomeCubit(sl<GetHomeSummary>()));
+
+  sl.registerLazySingleton<OrdersRepository>(
+    () => OrdersRepositoryImpl(sl<ApiClient>(), sl<AuthSession>()),
+  );
+  sl.registerLazySingleton(() => GetOrders(sl<OrdersRepository>()));
+  sl.registerFactory(() => OrdersCubit(sl<GetOrders>()));
+
+  sl.registerLazySingleton<WalletRepository>(
+    () => WalletRepositoryImpl(sl<ApiClient>(), sl<AuthSession>()),
+  );
+  sl.registerLazySingleton(() => GetWalletSummary(sl<WalletRepository>()));
+  sl.registerFactory(() => WalletCubit(sl<GetWalletSummary>()));
+
+  sl.registerLazySingleton<PartnerServicesRepository>(
+    () => PartnerServicesRepositoryImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton(
+    () => GetPartnerServices(sl<PartnerServicesRepository>()),
+  );
+  sl.registerFactory(() => PartnerServicesCubit(sl<GetPartnerServices>()));
+
+  sl.registerLazySingleton<TrackingRepository>(
+    () => TrackingRepositoryImpl(sl<ApiClient>(), sl<AuthSession>()),
+  );
+  sl.registerLazySingleton(() => GetActiveTracking(sl<TrackingRepository>()));
+  sl.registerFactory(() => TrackingCubit(sl<GetActiveTracking>()));
+
+  sl.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton(() => GetProfile(sl<ProfileRepository>()));
+  sl.registerFactory(() => ProfileCubit(sl<GetProfile>()));
 }
