@@ -15,11 +15,13 @@ class CardSkeleton extends StatelessWidget {
     ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.55);
 
     return Container(
-      height: height,
+      constraints: BoxConstraints(minHeight: height),
       decoration: BoxDecoration(color: color, borderRadius: AppRadius.card),
       padding: AppSpacing.card,
+      alignment: Alignment.centerLeft,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           _SkeletonLine(width: 128),
           const SizedBox(height: AppSpacing.lg),

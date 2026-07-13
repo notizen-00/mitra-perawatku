@@ -30,7 +30,11 @@ class HomeRepositoryImpl implements HomeRepository {
       );
       final notificationResponse = await _apiClient.get(
         ApiEndpoints.notifications,
-        queryParameters: {'status': 'unread', 'per_page': 50},
+        queryParameters: {
+          'user_id': user.id,
+          'status': 'unread',
+          'per_page': 50,
+        },
       );
 
       final bookings = _extractList(bookingsResponse);

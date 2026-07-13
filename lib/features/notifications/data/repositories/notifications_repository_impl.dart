@@ -1,21 +1,26 @@
 import '../../../../core/config/api_endpoints.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/auth_session.dart';
 import '../../../../core/utils/json_helpers.dart';
 import '../../domain/entities/notification.dart';
 import '../../domain/repositories/notifications_repository.dart';
 
 class NotificationsRepositoryImpl implements NotificationsRepository {
-  const NotificationsRepositoryImpl(this._apiClient);
+  const NotificationsRepositoryImpl(this._apiClient, this._session);
 
   final ApiClient _apiClient;
+  final AuthSession _session;
 
   @override
   Future<List<AppNotification>> getNotifications() async {
     try {
       final response = await _apiClient.get(
         ApiEndpoints.notifications,
-        queryParameters: {'per_page': 50},
+        queryParameters: {
+          if (_session.userId != null) 'user_id': _session.userId,
+          'per_page': 50,
+        },
       );
 
       return jsonList(response).map(_notification).toList();

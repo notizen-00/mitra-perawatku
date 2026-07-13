@@ -102,7 +102,7 @@ Future<void> init() async {
   sl.registerFactory(() => WalletCubit(sl<GetWalletSummary>()));
 
   sl.registerLazySingleton<NotificationsRepository>(
-    () => NotificationsRepositoryImpl(sl<ApiClient>()),
+    () => NotificationsRepositoryImpl(sl<ApiClient>(), sl<AuthSession>()),
   );
   sl.registerLazySingleton(
     () => GetNotifications(sl<NotificationsRepository>()),
