@@ -7,6 +7,7 @@ class OrderBooking extends Equatable {
     required this.serviceName,
     required this.patientName,
     required this.status,
+    required this.scheduledDate,
     required this.scheduledAt,
     required this.totalAmount,
   });
@@ -16,6 +17,7 @@ class OrderBooking extends Equatable {
   final String serviceName;
   final String patientName;
   final String status;
+  final String scheduledDate;
   final String scheduledAt;
   final double totalAmount;
 
@@ -26,6 +28,7 @@ class OrderBooking extends Equatable {
     serviceName,
     patientName,
     status,
+    scheduledDate,
     scheduledAt,
     totalAmount,
   ];

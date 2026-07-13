@@ -13,7 +13,9 @@ import '../../features/home/domain/usecases/get_home_summary.dart';
 import '../../features/home/presentation/cubit/home_cubit.dart';
 import '../../features/orders/data/repositories/orders_repository_impl.dart';
 import '../../features/orders/domain/repositories/orders_repository.dart';
+import '../../features/orders/domain/usecases/get_order_detail.dart';
 import '../../features/orders/domain/usecases/get_orders.dart';
+import '../../features/orders/presentation/bloc/order_detail_bloc.dart';
 import '../../features/orders/presentation/cubit/orders_cubit.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
@@ -33,6 +35,7 @@ import '../../features/wallet/domain/usecases/get_wallet_summary.dart';
 import '../../features/wallet/presentation/cubit/wallet_cubit.dart';
 import '../network/api_client.dart';
 import '../services/auth_session.dart';
+import '../services/partner_location_sync_service.dart';
 import '../services/reverb_websocket_service.dart';
 
 final sl = GetIt.instance;
@@ -48,6 +51,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AuthSession(sl<FlutterSecureStorage>()));
   await sl<AuthSession>().restore();
   sl.registerLazySingleton(() => ApiClient(sl<AuthSession>()));
+  sl.registerLazySingleton(() => PartnerLocationSyncService(sl<ApiClient>()));
   sl.registerLazySingleton(
     () => ReverbWebSocketService(sl<ApiClient>(), sl<AuthSession>()),
   );
@@ -75,7 +79,9 @@ Future<void> init() async {
     () => OrdersRepositoryImpl(sl<ApiClient>(), sl<AuthSession>()),
   );
   sl.registerLazySingleton(() => GetOrders(sl<OrdersRepository>()));
+  sl.registerLazySingleton(() => GetOrderDetail(sl<OrdersRepository>()));
   sl.registerFactory(() => OrdersCubit(sl<GetOrders>()));
+  sl.registerFactory(() => OrderDetailBloc(sl<GetOrderDetail>()));
 
   sl.registerLazySingleton<WalletRepository>(
     () => WalletRepositoryImpl(sl<ApiClient>(), sl<AuthSession>()),

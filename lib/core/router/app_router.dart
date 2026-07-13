@@ -5,6 +5,7 @@ import '../services/auth_session.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/orders/presentation/pages/order_detail_page.dart';
 import '../../features/orders/presentation/pages/orders_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/services/presentation/pages/partner_services_page.dart';
@@ -44,6 +45,13 @@ final appRouter = GoRouter(
     GoRoute(path: '/', builder: (context, state) => const LoginPage()),
     GoRoute(path: '/dashboard', builder: (context, state) => const HomePage()),
     GoRoute(path: '/orders', builder: (context, state) => const OrdersPage()),
+    GoRoute(
+      path: '/orders/:id',
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+        return OrderDetailPage(orderId: id);
+      },
+    ),
     GoRoute(
       path: '/tracking',
       builder: (context, state) => const TrackingPage(),
