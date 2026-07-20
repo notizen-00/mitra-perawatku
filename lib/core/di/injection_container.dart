@@ -5,7 +5,10 @@ import '../../features/account/data/datasources/account_remote_data_source.dart'
 import '../../features/account/data/repositories/account_repository_impl.dart';
 import '../../features/account/domain/repositories/account_repository.dart';
 import '../../features/account/domain/usecases/get_account.dart';
+import '../../features/account/domain/usecases/delete_account_profile_photo.dart';
 import '../../features/account/domain/usecases/logout_account.dart';
+import '../../features/account/domain/usecases/update_account_profile.dart';
+import '../../features/account/domain/usecases/upload_account_profile_photo.dart';
 import '../../features/account/presentation/bloc/account_bloc.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
@@ -94,10 +97,22 @@ Future<void> init() async {
     () => AccountRepositoryImpl(sl<AccountRemoteDataSource>(), sl<AuthSession>()),
   );
   sl.registerLazySingleton(() => GetAccount(sl<AccountRepository>()));
+  sl.registerLazySingleton(
+    () => UpdateAccountProfile(sl<AccountRepository>()),
+  );
+  sl.registerLazySingleton(
+    () => UploadAccountProfilePhoto(sl<AccountRepository>()),
+  );
+  sl.registerLazySingleton(
+    () => DeleteAccountProfilePhoto(sl<AccountRepository>()),
+  );
   sl.registerLazySingleton(() => LogoutAccount(sl<AccountRepository>()));
   sl.registerFactory(
     () => AccountBloc(
       getAccount: sl<GetAccount>(),
+      updateAccountProfile: sl<UpdateAccountProfile>(),
+      uploadProfilePhoto: sl<UploadAccountProfilePhoto>(),
+      deleteProfilePhoto: sl<DeleteAccountProfilePhoto>(),
       logoutAccount: sl<LogoutAccount>(),
     ),
   );

@@ -1,6 +1,7 @@
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/auth_session.dart';
+import '../../domain/entities/account_profile_update.dart';
 import '../../domain/entities/account_summary.dart';
 import '../../domain/repositories/account_repository.dart';
 import '../datasources/account_remote_data_source.dart';
@@ -24,6 +25,42 @@ class AccountRepositoryImpl implements AccountRepository {
         meResponse: responses[0],
         servicesResponse: responses[1],
       );
+    } on ApiException catch (error) {
+      throw _mapApiException(error);
+    } on FormatException catch (error) {
+      throw ServerFailure(error.message);
+    }
+  }
+
+  @override
+  Future<AccountSummary> updateProfile(AccountProfileUpdate input) async {
+    try {
+      await _remoteDataSource.updateProfile(input.toJson());
+      return getAccount();
+    } on ApiException catch (error) {
+      throw _mapApiException(error);
+    } on FormatException catch (error) {
+      throw ServerFailure(error.message);
+    }
+  }
+
+  @override
+  Future<AccountSummary> uploadProfilePhoto(String filePath) async {
+    try {
+      await _remoteDataSource.uploadProfilePhoto(filePath);
+      return getAccount();
+    } on ApiException catch (error) {
+      throw _mapApiException(error);
+    } on FormatException catch (error) {
+      throw ServerFailure(error.message);
+    }
+  }
+
+  @override
+  Future<AccountSummary> deleteProfilePhoto() async {
+    try {
+      await _remoteDataSource.deleteProfilePhoto();
+      return getAccount();
     } on ApiException catch (error) {
       throw _mapApiException(error);
     } on FormatException catch (error) {

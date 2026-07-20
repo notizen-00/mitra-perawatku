@@ -5,12 +5,14 @@ class AccountSummary extends Equatable {
     required this.name,
     required this.email,
     required this.phone,
+    required this.profilePhotoUrl,
     required this.profession,
     required this.specialization,
     required this.licenseNumber,
     required this.workLocation,
     required this.yearsOfExperience,
     required this.consultationFee,
+    required this.bio,
     required this.isAvailable,
     required this.verificationStatus,
     required this.joinedYear,
@@ -24,12 +26,14 @@ class AccountSummary extends Equatable {
   final String name;
   final String email;
   final String phone;
+  final String profilePhotoUrl;
   final String profession;
   final String specialization;
   final String licenseNumber;
   final String workLocation;
   final int yearsOfExperience;
   final double consultationFee;
+  final String bio;
   final bool isAvailable;
   final String verificationStatus;
   final String joinedYear;
@@ -46,12 +50,14 @@ class AccountSummary extends Equatable {
         name,
         email,
         phone,
+        profilePhotoUrl,
         profession,
         specialization,
         licenseNumber,
         workLocation,
         yearsOfExperience,
         consultationFee,
+        bio,
         isAvailable,
         verificationStatus,
         joinedYear,

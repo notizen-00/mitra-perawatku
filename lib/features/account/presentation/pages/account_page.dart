@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/json_helpers.dart';
+import '../../domain/entities/account_profile_update.dart';
 import '../../domain/entities/account_summary.dart';
 import '../bloc/account_bloc.dart';
 
@@ -28,6 +30,11 @@ class _AccountView extends StatelessWidget {
     return BlocListener<AccountBloc, AccountState>(
       listener: (context, state) {
         if (state is AccountLoggedOut) context.go('/login');
+        if (state is AccountLoaded && state.message != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message!)),
+          );
+        }
       },
       child: PopScope(
         canPop: false,
@@ -49,6 +56,7 @@ class _AccountView extends StatelessWidget {
 
                 final summary = switch (state) {
                   AccountLoaded(:final summary) => summary,
+                  AccountSaving(:final summary) => summary,
                   AccountLogoutInProgress(:final summary) => summary,
                   _ => null,
                 };
@@ -63,6 +71,7 @@ class _AccountView extends StatelessWidget {
                       .add(const AccountRefreshRequested()),
                   child: _AccountContent(
                     summary: summary,
+                    isSaving: state is AccountSaving,
                     isLoggingOut: state is AccountLogoutInProgress,
                   ),
                 );
@@ -78,10 +87,12 @@ class _AccountView extends StatelessWidget {
 class _AccountContent extends StatelessWidget {
   const _AccountContent({
     required this.summary,
+    required this.isSaving,
     required this.isLoggingOut,
   });
 
   final AccountSummary summary;
+  final bool isSaving;
   final bool isLoggingOut;
 
   @override
@@ -93,6 +104,10 @@ class _AccountContent extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
           children: [
             const _AccountTopBar(),
+            if (isSaving) ...[
+              const LinearProgressIndicator(minHeight: 3),
+              const SizedBox(height: 10),
+            ],
             const SizedBox(height: 8),
             _ProfileHeader(summary: summary),
             const SizedBox(height: 18),
@@ -163,6 +178,12 @@ class _ProfileHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: const Color(0xFFE8F5F1),
+                image: summary.profilePhotoUrl.isEmpty
+                    ? null
+                    : DecorationImage(
+                        image: NetworkImage(summary.profilePhotoUrl),
+                        fit: BoxFit.cover,
+                      ),
                 border: Border.all(color: Colors.white, width: 5),
                 boxShadow: const [
                   BoxShadow(
@@ -172,10 +193,34 @@ class _ProfileHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.medical_services_rounded,
-                color: AppColors.primary,
-                size: 44,
+              child: summary.profilePhotoUrl.isEmpty
+                  ? const Icon(
+                      Icons.medical_services_rounded,
+                      color: AppColors.primary,
+                      size: 44,
+                    )
+                  : null,
+            ),
+            Positioned(
+              left: 5,
+              bottom: 7,
+              child: InkWell(
+                onTap: () => _showPhotoActions(context, summary),
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.secondary,
+                    border: Border.all(color: Colors.white, width: 3),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: Colors.white,
+                    size: 14,
+                  ),
+                ),
               ),
             ),
             Positioned(
@@ -366,8 +411,7 @@ class _MenuTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
-      onTap: () =>
-          context.read<AccountBloc>().add(AccountMenuSelected(item.title)),
+      onTap: () => _handleMenuTap(context, item.title),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
@@ -525,6 +569,11 @@ class _VersionFooter extends StatelessWidget {
 
 List<_MenuItemData> _professionalItems(AccountSummary summary) {
   return [
+    const _MenuItemData(
+      title: 'Edit Profile',
+      icon: Icons.edit_outlined,
+      subtitle: 'Update profil layanan mitra',
+    ),
     _MenuItemData(
       title: 'Legal Documents (STR/SIP)',
       icon: Icons.description_outlined,
@@ -585,4 +634,325 @@ String _professionLabel(AccountSummary summary) {
     'bidan' => 'Midwife',
     _ => 'Mitra',
   };
+}
+
+void _handleMenuTap(BuildContext context, String title) {
+  context.read<AccountBloc>().add(AccountMenuSelected(title));
+
+  if (title == 'Edit Profile' ||
+      title == 'Specializations' ||
+      title == 'Practice Address' ||
+      title == 'Service & Pricing Settings') {
+    final state = context.read<AccountBloc>().state;
+    final summary = state is AccountLoaded ? state.summary : null;
+    if (summary != null) _showEditProfileSheet(context, summary);
+    return;
+  }
+
+  if (title == 'Security & Password') {
+    _showPasswordSheet(context);
+  }
+}
+
+Future<void> _showPhotoActions(
+  BuildContext context,
+  AccountSummary summary,
+) {
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetContext) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Pilih foto profil'),
+                subtitle: const Text('JPG, PNG, atau WebP maksimal 2MB'),
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  final picker = ImagePicker();
+                  final file = await picker.pickImage(
+                    source: ImageSource.gallery,
+                    maxWidth: 1024,
+                    imageQuality: 82,
+                  );
+                  if (file == null || !context.mounted) return;
+                  context
+                      .read<AccountBloc>()
+                      .add(AccountProfilePhotoSelected(file.path));
+                },
+              ),
+              if (summary.profilePhotoUrl.isNotEmpty)
+                ListTile(
+                  leading: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.error,
+                  ),
+                  title: const Text('Hapus foto profil'),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context
+                        .read<AccountBloc>()
+                        .add(const AccountProfilePhotoDeleted());
+                  },
+                ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _showEditProfileSheet(
+  BuildContext context,
+  AccountSummary summary,
+) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => _EditProfileSheet(summary: summary),
+  );
+}
+
+void _showPasswordSheet(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Security & Password',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Endpoint update password belum tercantum di BACKEND_INTEGRATION.md, jadi fitur ini belum dikirim ke server agar tidak memakai kontrak API yang salah.',
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Mengerti'),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _EditProfileSheet extends StatefulWidget {
+  const _EditProfileSheet({required this.summary});
+
+  final AccountSummary summary;
+
+  @override
+  State<_EditProfileSheet> createState() => _EditProfileSheetState();
+}
+
+class _EditProfileSheetState extends State<_EditProfileSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _specialization;
+  late final TextEditingController _licenseNumber;
+  late final TextEditingController _workLocation;
+  late final TextEditingController _yearsOfExperience;
+  late final TextEditingController _consultationFee;
+  late final TextEditingController _bio;
+  late bool _isAvailable;
+
+  @override
+  void initState() {
+    super.initState();
+    final summary = widget.summary;
+    _specialization = TextEditingController(text: _clean(summary.specialization));
+    _licenseNumber = TextEditingController(text: _clean(summary.licenseNumber));
+    _workLocation = TextEditingController(text: _clean(summary.workLocation));
+    _yearsOfExperience = TextEditingController(
+      text: summary.yearsOfExperience.toString(),
+    );
+    _consultationFee = TextEditingController(
+      text: summary.consultationFee.round().toString(),
+    );
+    _bio = TextEditingController(text: summary.bio);
+    _isAvailable = summary.isAvailable;
+  }
+
+  @override
+  void dispose() {
+    _specialization.dispose();
+    _licenseNumber.dispose();
+    _workLocation.dispose();
+    _yearsOfExperience.dispose();
+    _consultationFee.dispose();
+    _bio.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottom),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 22),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Edit Profile',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                _TextField(
+                  controller: _specialization,
+                  label: 'Specialization',
+                  icon: Icons.medical_services_outlined,
+                ),
+                const SizedBox(height: 12),
+                _TextField(
+                  controller: _licenseNumber,
+                  label: 'License Number / STR',
+                  icon: Icons.badge_outlined,
+                ),
+                const SizedBox(height: 12),
+                _TextField(
+                  controller: _workLocation,
+                  label: 'Practice Address',
+                  icon: Icons.location_on_outlined,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _TextField(
+                        controller: _yearsOfExperience,
+                        label: 'Experience',
+                        icon: Icons.work_history_outlined,
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _TextField(
+                        controller: _consultationFee,
+                        label: 'Fee',
+                        icon: Icons.payments_outlined,
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _TextField(
+                  controller: _bio,
+                  label: 'Bio',
+                  icon: Icons.notes_outlined,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _isAvailable,
+                  title: const Text('Available for orders'),
+                  subtitle: const Text('Update is_available di profil mitra'),
+                  onChanged: (value) => setState(() => _isAvailable = value),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _submit,
+                    icon: const Icon(Icons.save_outlined),
+                    label: const Text('Simpan Profile'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    context.read<AccountBloc>().add(
+          AccountProfileSubmitted(
+            AccountProfileUpdate(
+              specialization: _specialization.text.trim(),
+              licenseNumber: _licenseNumber.text.trim(),
+              workLocation: _workLocation.text.trim(),
+              yearsOfExperience:
+                  int.tryParse(_yearsOfExperience.text.trim()) ?? 0,
+              consultationFee:
+                  double.tryParse(_consultationFee.text.trim()) ?? 0,
+              bio: _bio.text.trim(),
+              isAvailable: _isAvailable,
+            ),
+          ),
+        );
+    Navigator.of(context).pop();
+  }
+
+  String _clean(String value) {
+    return value == '-' ? '' : value;
+  }
+}
+
+class _TextField extends StatelessWidget {
+  const _TextField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.keyboardType,
+    this.maxLines = 1,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final TextInputType? keyboardType;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      validator: (value) {
+        if ((value ?? '').trim().isEmpty && label != 'Bio') {
+          return '$label wajib diisi';
+        }
+        return null;
+      },
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
+      ),
+    );
+  }
 }

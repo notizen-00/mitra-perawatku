@@ -8,6 +8,7 @@ class ApiEndpoints {
   static const pharmacyLogin = '/mitra/apotik/login';
   static const me = '/shared/me';
   static const logout = '/shared/logout';
+  static const profilePhoto = '/shared/profile-photo';
   static const mitraProfile = '/mitra/profile';
   static const serviceApplications = '/mitra/service-applications';
   static const serviceBookings = '/mitra/service-bookings';

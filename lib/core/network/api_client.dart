@@ -38,6 +38,95 @@ class ApiClient {
     return _request(method: 'DELETE', path: path);
   }
 
+  Future<Map<String, dynamic>> postMultipartFile({
+    required String path,
+    required String fieldName,
+    required String filePath,
+    Map<String, String>? fields,
+  }) async {
+    final uri = Uri.parse('${ApiConfig.apiBaseUrl}$path');
+    final boundary = '----mitra-perawatku-${DateTime.now().microsecondsSinceEpoch}';
+    final file = File(filePath);
+    final fileName = file.uri.pathSegments.isEmpty
+        ? 'upload.jpg'
+        : file.uri.pathSegments.last;
+
+    try {
+      final request = await _httpClient
+          .postUrl(uri)
+          .timeout(const Duration(seconds: 20));
+
+      for (final header in _session.headers.entries) {
+        if (header.key.toLowerCase() != 'content-type') {
+          request.headers.set(header.key, header.value);
+        }
+      }
+      request.headers.set(
+        HttpHeaders.contentTypeHeader,
+        'multipart/form-data; boundary=$boundary',
+      );
+
+      for (final entry in (fields ?? const <String, String>{}).entries) {
+        request.write('--$boundary\r\n');
+        request.write(
+          'Content-Disposition: form-data; name="${entry.key}"\r\n\r\n',
+        );
+        request.write('${entry.value}\r\n');
+      }
+
+      request.write('--$boundary\r\n');
+      request.write(
+        'Content-Disposition: form-data; name="$fieldName"; filename="$fileName"\r\n',
+      );
+      request.write('Content-Type: ${_contentType(fileName)}\r\n\r\n');
+      await request.addStream(file.openRead());
+      request.write('\r\n--$boundary--\r\n');
+
+      final response = await request.close().timeout(
+        const Duration(seconds: 45),
+      );
+      final payload = await response.transform(utf8.decoder).join();
+      final decoded = payload.isEmpty
+          ? <String, dynamic>{}
+          : jsonDecode(payload);
+
+      if (decoded is! Map<String, dynamic>) {
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: 'Format respons server tidak dikenali.',
+        );
+      }
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        if (response.statusCode == 401) {
+          await _session.clear();
+        }
+
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: _extractMessage(decoded),
+          errors: decoded['errors'],
+        );
+      }
+
+      return decoded;
+    } on ApiException {
+      rethrow;
+    } on SocketException catch (error) {
+      throw ApiException(statusCode: 0, message: error.message);
+    } on TimeoutException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Koneksi ke server terlalu lama.',
+      );
+    } on FormatException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Respons server bukan JSON valid.',
+      );
+    }
+  }
+
   Future<Map<String, dynamic>> _request({
     required String method,
     required String path,
@@ -129,6 +218,17 @@ class ApiClient {
     }
 
     return 'Request gagal diproses server.';
+  }
+
+  String _contentType(String fileName) {
+    final extension = fileName.split('.').last.toLowerCase();
+    return switch (extension) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'jpg' || 'jpeg' => 'image/jpeg',
+      'pdf' => 'application/pdf',
+      _ => 'application/octet-stream',
+    };
   }
 }
 

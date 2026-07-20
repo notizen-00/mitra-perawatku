@@ -17,6 +17,22 @@ class AccountRemoteDataSource {
     );
   }
 
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) {
+    return _apiClient.patch(ApiEndpoints.mitraProfile, body: body);
+  }
+
+  Future<Map<String, dynamic>> uploadProfilePhoto(String filePath) {
+    return _apiClient.postMultipartFile(
+      path: ApiEndpoints.profilePhoto,
+      fieldName: 'profile_photo',
+      filePath: filePath,
+    );
+  }
+
+  Future<Map<String, dynamic>> deleteProfilePhoto() {
+    return _apiClient.delete(ApiEndpoints.profilePhoto);
+  }
+
   Future<void> logout() async {
     await _apiClient.post(ApiEndpoints.logout);
   }
