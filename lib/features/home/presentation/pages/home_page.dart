@@ -191,10 +191,15 @@ class _PartnerHeader extends StatelessWidget {
           CircleAvatar(
             radius: 30,
             backgroundColor: colors.primaryContainer,
-            child: Icon(
-              Icons.medical_services_outlined,
-              color: colors.onPrimary,
-            ),
+            backgroundImage: summary.profilePhotoUrl.isEmpty
+                ? null
+                : NetworkImage(summary.profilePhotoUrl),
+            child: summary.profilePhotoUrl.isEmpty
+                ? Icon(
+                    Icons.medical_services_outlined,
+                    color: colors.onPrimary,
+                  )
+                : null,
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(

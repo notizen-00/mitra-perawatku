@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 class HomeSummary extends Equatable {
   const HomeSummary({
     required this.partnerName,
+    required this.profilePhotoUrl,
     required this.profession,
     required this.verificationStatus,
     required this.activeOrders,
@@ -20,6 +21,7 @@ class HomeSummary extends Equatable {
   });
 
   final String partnerName;
+  final String profilePhotoUrl;
   final String profession;
   final String verificationStatus;
   final int activeOrders;
@@ -37,6 +39,7 @@ class HomeSummary extends Equatable {
 
   HomeSummary copyWith({
     String? partnerName,
+    String? profilePhotoUrl,
     String? profession,
     String? verificationStatus,
     int? activeOrders,
@@ -54,6 +57,7 @@ class HomeSummary extends Equatable {
   }) {
     return HomeSummary(
       partnerName: partnerName ?? this.partnerName,
+      profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
       profession: profession ?? this.profession,
       verificationStatus: verificationStatus ?? this.verificationStatus,
       activeOrders: activeOrders ?? this.activeOrders,
@@ -74,6 +78,7 @@ class HomeSummary extends Equatable {
   @override
   List<Object?> get props => [
     partnerName,
+    profilePhotoUrl,
     profession,
     verificationStatus,
     activeOrders,

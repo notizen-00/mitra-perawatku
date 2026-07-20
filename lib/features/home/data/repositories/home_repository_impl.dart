@@ -45,6 +45,7 @@ class HomeRepositoryImpl implements HomeRepository {
 
       return HomeSummary(
         partnerName: user.name.isEmpty ? 'Mitra Perawatku' : user.name,
+        profilePhotoUrl: userJson['profile_photo_url']?.toString() ?? '',
         profession: _professionLabel(profile?.profession),
         verificationStatus: profile?.verificationStatus ?? 'pending',
         activeOrders: bookings.where(_isActiveBooking).length,
