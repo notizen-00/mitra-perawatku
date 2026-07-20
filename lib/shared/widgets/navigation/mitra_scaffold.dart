@@ -25,17 +25,12 @@ class MitraScaffold extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
         actions: [
-        IconButton(
-          onPressed: () => context.go('/notifications'),
-          icon: const Icon(Icons.notifications_none_rounded),
-          tooltip: 'Notifikasi',
-        ),
-        TextButton.icon(
-          onPressed: () => context.go('/mockup'),
-          icon: const Icon(Icons.layers_outlined),
-          label: const Text('Mockup'),
-        ),
-      ],
+          IconButton(
+            onPressed: () => context.go('/notifications'),
+            icon: const Icon(Icons.notifications_none_rounded),
+            tooltip: 'Notifikasi',
+          ),
+        ],
       ),
       body: onRefresh == null
           ? content
