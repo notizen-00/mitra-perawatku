@@ -179,11 +179,47 @@ GET /api/shared/me
 POST /api/shared/logout
 ```
 
-Simpan `user_api_token` di secure storage Flutter. Semua endpoint protected memakai:
+Simpan `user_api_token` di secure storage Flutter. Login/register akan menerbitkan token baru dan mereset token lama user tersebut, jadi selalu overwrite token lama di secure storage setelah login ulang.
+
+Semua endpoint protected memakai:
 
 ```http
 Authorization: Bearer 1|plain-token
 ```
+
+### Foto Profil
+
+Endpoint foto profil bersifat shared, jadi bisa dipakai oleh semua akun login termasuk mitra tenaga kesehatan, apotik, kurir, dan admin.
+
+```http
+POST /api/shared/profile-photo
+DELETE /api/shared/profile-photo
+```
+
+Upload foto memakai `multipart/form-data`, bukan JSON. Jangan set header `Content-Type` manual di Flutter; biarkan `MultipartRequest`/Dio/FormData mengisi boundary otomatis.
+
+Field upload:
+
+| Field           | Required | Type       | Rule/Catatan                  |
+| --------------- | -------- | ---------- | ----------------------------- |
+| `profile_photo` | Ya       | file image | jpg, jpeg, png, webp; max 2MB |
+
+Contoh response setelah upload:
+
+```json
+{
+  "message": "Foto profil berhasil diperbarui.",
+  "data": {
+    "id": 12,
+    "name": "dr. Andi",
+    "role": "mitra",
+    "profile_photo_path": "users/12/profile/abc123.jpg",
+    "profile_photo_url": "https://backend.perawatku.tech/storage/users/12/profile/abc123.jpg"
+  }
+}
+```
+
+Gunakan `profile_photo_url` untuk preview di aplikasi. `profile_photo_path` hanya path internal backend.
 
 ## Profil Mitra
 
@@ -256,7 +292,6 @@ Body `POST /api/mitra/service-applications`:
 ```json
 {
   "service_id": 1,
-  "custom_price": 150000,
   "coverage_radius_km": 15,
   "notes": "Siap untuk homecare area Jember Kota"
 }
@@ -264,19 +299,19 @@ Body `POST /api/mitra/service-applications`:
 
 Field:
 
-| Field                | Required | Type    | Rule/Catatan            |
-| -------------------- | -------- | ------- | ----------------------- |
-| `service_id`         | Ya       | integer | harus ada di `services` |
-| `custom_price`       | Tidak    | numeric | min 0                   |
-| `coverage_radius_km` | Tidak    | integer | min 1                   |
-| `notes`              | Tidak    | string  | catatan pengajuan       |
+| Field                | Required | Type    | Rule/Catatan                                                                                                              |
+| -------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `service_id`         | Ya       | integer | harus ada di `services`                                                                                                   |
+| `price`              | Tidak    | numeric | hanya dipakai untuk service konsultasi/chat jika tersedia; service booking non-konsultasi dikunci ke `service.base_price` |
+| `coverage_radius_km` | Tidak    | integer | min 1                                                                                                                     |
+| `notes`              | Tidak    | string  | catatan pengajuan                                                                                                         |
 
 Body `PATCH /api/mitra/service-applications/{partnerService}`:
 
 ```json
 {
-  "custom_price": 175000,
   "coverage_radius_km": 20,
+  "is_available": true,
   "is_active": true,
   "notes": "Update radius layanan"
 }
@@ -294,13 +329,15 @@ bidan   -> bidan_homecare, konsultasi_tindakan
 
 ## Booking Layanan Mitra
 
-Endpoint ini untuk menerima dan memproses booking layanan homecare yang ditugaskan ke mitra.
+Endpoint ini untuk menerima dan memproses booking layanan yang ditugaskan ke mitra. Route `/api/mitra/*` dilindungi middleware role mitra, sehingga token pasien tidak dapat memakai endpoint mitra. Saat pasien membuat booking, backend langsung memilih mitra yang cocok dan mengirim event realtime ke mitra tersebut.
 
 ```http
 GET /api/mitra/service-bookings
 GET /api/mitra/service-bookings/{serviceBooking}
 PATCH /api/mitra/service-bookings/{serviceBooking}/accept
+PATCH /api/mitra/service-bookings/{serviceBooking}/reject
 PATCH /api/mitra/service-bookings/{serviceBooking}/start-journey
+PATCH /api/mitra/service-bookings/{serviceBooking}/location
 POST /api/mitra/service-bookings/{serviceBooking}/histories
 PATCH /api/mitra/service-bookings/{serviceBooking}/complete
 PATCH /api/mitra/service-bookings/{serviceBooking}/status
@@ -308,18 +345,16 @@ PATCH /api/mitra/service-bookings/{serviceBooking}/status
 
 Query `GET /api/mitra/service-bookings`:
 
-| Query                      | Required | Type    | Rule/Catatan                                                                |
-| -------------------------- | -------- | ------- | --------------------------------------------------------------------------- |
-| `patient_user_id`          | Tidak    | integer | filter pasien                                                               |
-| `assigned_partner_user_id` | Tidak    | integer | untuk app mitra biasanya isi ID user login                                  |
-| `service_id`               | Tidak    | integer | filter layanan                                                              |
-| `status`                   | Tidak    | enum    | `pending`, `confirmed`, `scheduled`, `on_the_way`, `completed`, `cancelled` |
-| `per_page`                 | Tidak    | integer | 1-100                                                                       |
+| Query        | Required | Type    | Rule/Catatan                                                                |
+| ------------ | -------- | ------- | --------------------------------------------------------------------------- |
+| `service_id` | Tidak    | integer | filter layanan                                                              |
+| `status`     | Tidak    | enum    | `pending`, `confirmed`, `scheduled`, `on_the_way`, `completed`, `cancelled` |
+| `per_page`   | Tidak    | integer | 1-100                                                                       |
 
-Catatan: endpoint list umum belum otomatis memfilter milik user login. Untuk app mitra, kirim:
+List otomatis dibatasi ke:
 
 ```text
-assigned_partner_user_id={currentUser.id}
+assigned_partner_user_id = user login
 ```
 
 ### Accept Booking
@@ -342,13 +377,75 @@ Syarat:
 - booking ditugaskan ke mitra tersebut atau belum punya assigned partner;
 - layanan sesuai profesi mitra;
 - partner service aktif dan terverifikasi;
-- `payment.status = paid` jika booking punya payment.
+- status booking masih `pending` atau `scheduled`.
 
-Jika pembayaran belum lunas, backend mengembalikan error:
+Accept bisa dilakukan sebelum pembayaran lunas. Setelah accept, pasien melanjutkan pembayaran. Aksi berikutnya seperti `start-journey`, `histories`, dan `complete` membutuhkan `payment.status = paid`.
 
-```text
-Pesanan layanan belum dapat diproses karena pembayaran belum lunas.
+### Reject Booking
+
+```http
+PATCH /api/mitra/service-bookings/{serviceBooking}/reject
 ```
+
+Body:
+
+```json
+{
+  "notes": "Jadwal tidak tersedia."
+}
+```
+
+Syarat:
+
+- booking masih ditugaskan ke mitra login;
+- status masih `pending` atau `scheduled`;
+- `accepted_at` masih null;
+- pembayaran belum `paid`.
+
+Saat mitra menolak, booking pasien tidak otomatis batal. Backend mencatat penolakan mitra, mengecualikan mitra tersebut dari kandidat, lalu mencari mitra aktif terdekat lain untuk layanan yang sama. Jika mitra pengganti ditemukan, `assigned_partner_user_id`, `distance_km`, `transport_fee`, `meal_fee`, `total_amount`, dan payment pending akan disesuaikan dengan mitra baru, kemudian event `service-booking.matched` dikirim ke mitra pengganti.
+
+Response penting:
+
+```json
+{
+  "message": "Pesanan ditolak dan berhasil dialihkan ke mitra lain.",
+  "matchmaking_status": "rematched_waiting_partner_acceptance",
+  "matchmaking": {
+    "partner_service_id": 18,
+    "partner_user_id": 44,
+    "distance_km": 3.25,
+    "match_score": 78.4,
+    "quality_score": 82.5,
+    "rematched_from_partner_user_id": 12
+  }
+}
+```
+
+Jika belum ada mitra pengganti:
+
+```json
+{
+  "message": "Pesanan ditolak. Belum ada mitra pengganti yang tersedia.",
+  "matchmaking_status": "waiting_partner_available",
+  "matchmaking": null,
+  "data": {
+    "assigned_partner_user_id": null,
+    "payment": null
+  }
+}
+```
+
+Pada kondisi `waiting_partner_available`, backend menghapus transaksi/payment pending agar pasien tidak bisa membayar booking yang belum memiliki mitra. Payment pending akan dibuat ulang otomatis jika pasien menekan rematch lagi dan backend menemukan mitra pengganti.
+
+Frontend mitra setelah reject sebaiknya menghapus order dari list mitra yang menolak. Mitra baru akan mendapat order lewat list API miliknya dan event realtime `service-booking.matched`.
+
+Payout saldo mitra juga dapat terjadi saat pasien mengonfirmasi layanan selesai lewat:
+
+```http
+PATCH /api/patient/service-bookings/{serviceBooking}/confirm-completion
+```
+
+Jika booking sudah lunas dan belum pernah dibayarkan ke mitra, backend mengkredit wallet mitra sebesar `partner_payout_amount` dan mengisi `partner_paid_at` serta `partner_balance_transaction_id`. Endpoint ini idempotent, jadi konfirmasi ulang pasien tidak menggandakan saldo.
 
 ### Start Journey
 
@@ -369,6 +466,51 @@ Status booking berubah menjadi:
 ```text
 on_the_way
 ```
+
+Setelah status `on_the_way`, app mitra dapat mulai mengirim lokasi realtime berkala.
+
+### Update Lokasi Realtime
+
+```http
+PATCH /api/mitra/service-bookings/{serviceBooking}/location
+```
+
+Body:
+
+```json
+{
+  "latitude": -8.172357,
+  "longitude": 113.700302,
+  "accuracy_meters": 12.5,
+  "heading": 90,
+  "speed_mps": 4.2,
+  "recorded_at": "2026-07-08 10:00:00"
+}
+```
+
+Field:
+
+| Field             | Required | Type     | Rule/Catatan                               |
+| ----------------- | -------- | -------- | ------------------------------------------ |
+| `latitude`        | Ya       | numeric  | -90 sampai 90                              |
+| `longitude`       | Ya       | numeric  | -180 sampai 180                            |
+| `accuracy_meters` | Tidak    | numeric  | akurasi GPS meter, min 0                   |
+| `heading`         | Tidak    | numeric  | arah derajat 0-360                         |
+| `speed_mps`       | Tidak    | numeric  | meter/detik                                |
+| `recorded_at`     | Tidak    | datetime | waktu dari device; default backend `now()` |
+
+Syarat:
+
+- akun login adalah mitra yang ditugaskan ke booking;
+- status booking sudah `on_the_way`.
+
+Saat berhasil, backend menyimpan lokasi terakhir di booking dan broadcast event `service-booking.location.updated` ke channel pasien:
+
+```text
+private-service-booking.{serviceBookingId}.tracking
+```
+
+Rekomendasi Flutter mitra: mulai background/location stream setelah `start-journey`, kirim lokasi tiap 5-10 detik atau saat perpindahan signifikan, hentikan saat status `completed` atau `cancelled`. Tetap minta izin lokasi foreground/background sesuai kebutuhan platform.
 
 ### Tambah Catatan Penanganan
 
@@ -418,7 +560,9 @@ Saat berhasil:
 
 - status menjadi `completed`;
 - `completed_at` terisi;
-- saldo mitra dikreditkan jika `total_amount > 0` dan belum pernah dibayarkan ke mitra.
+- saldo mitra dikreditkan jika `partner_payout_amount > 0` dan belum pernah dibayarkan ke mitra.
+- Dashboard mitra harus menampilkan `partner_payout_amount` sebagai uang diterima. Nilai ini berisi harga dasar layanan untuk mitra ditambah `transport_fee` dan `meal_fee` jika ada; markup aplikasi tetap milik platform dan tidak masuk saldo mitra. Pada endpoint mitra dan event `service-booking.matched`, `total_amount` juga sudah dinormalisasi menjadi nominal mitra untuk kompatibilitas UI lama. Total bayar pasien tersedia di `patient_total_amount`.
+- Untuk breakdown dashboard, gunakan `partner_payout_breakdown`: tampilkan "Biaya layanan", "Transportasi" hanya jika `transport_fee_applied=true`, "Uang makan" hanya jika `meal_fee_applied=true`, lalu "Diterima mitra". `app_markup_amount` boleh dipakai sebagai info internal/debug, bukan pendapatan mitra.
 
 ### Update Status Manual
 
@@ -440,6 +584,51 @@ Status tersedia:
 ```text
 pending, confirmed, scheduled, on_the_way, completed, cancelled
 ```
+
+## Saldo Mitra
+
+Endpoint saldo mitra dipakai oleh dashboard mitra dan bisa dipakai Flutter untuk halaman wallet. Route `/api/mitra/*` dilindungi middleware role mitra, sehingga token pasien tidak dapat membaca saldo mitra.
+
+```http
+GET /api/mitra/balance
+GET /api/mitra/balance/history
+```
+
+Response `GET /api/mitra/balance`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "balance": {
+      "id": 1,
+      "user_id": 12,
+      "balance": "250000.00",
+      "reserved_balance": "50000.00",
+      "status": "active"
+    },
+    "summary": {
+      "current_balance": 250000,
+      "reserved_balance": 50000,
+      "available_balance": 200000,
+      "total_topup": 250000,
+      "total_refund": 0,
+      "total_deduction": 0,
+      "status": "active"
+    }
+  }
+}
+```
+
+Query `GET /api/mitra/balance/history`:
+
+| Query      | Required | Type    | Rule/Catatan                                                               |
+| ---------- | -------- | ------- | -------------------------------------------------------------------------- |
+| `per_page` | Tidak    | integer | default 20, max 100                                                        |
+| `type`     | Tidak    | string  | contoh `topup`, `refund`, `deduction`, `adjustment`, `transfer`, `payment` |
+| `status`   | Tidak    | string  | contoh `pending`, `completed`, `failed`, `cancelled`                       |
+
+Payout dari service booking masuk ke history saldo setelah pasien mengonfirmasi layanan selesai atau saat endpoint mitra complete berhasil mengkredit saldo. Gunakan `available_balance` untuk nominal yang bisa ditampilkan sebagai saldo tersedia.
 
 ## Konsultasi Mitra
 
@@ -824,7 +1013,8 @@ Setelah menerima event ini, app mitra sebaiknya:
 
 1. tampilkan notifikasi/order baru;
 2. panggil `GET /api/mitra/service-bookings/{id}` untuk detail penuh;
-3. tampilkan tombol accept hanya jika `payment.status = paid`.
+3. tampilkan tombol accept jika status booking `pending` atau `scheduled`;
+4. tampilkan tombol berangkat/selesai hanya jika `payment.status = paid`.
 
 ### User Notifications
 
@@ -937,16 +1127,18 @@ Gunakan channel ini jika app mitra perlu menampilkan status user online.
 
 ### User
 
-| Field             | Type        | Catatan                           |
-| ----------------- | ----------- | --------------------------------- |
-| `id`              | integer     | ID user                           |
-| `name`            | string      | nama user                         |
-| `email`           | string      | email login                       |
-| `phone`           | string/null | nomor telepon                     |
-| `role`            | enum        | normalnya `mitra` untuk app mitra |
-| `partner_profile` | object/null | profil tenaga kesehatan           |
-| `pharmacy`        | object/null | data apotik                       |
-| `courier_profile` | object/null | data kurir                        |
+| Field                | Type        | Catatan                                      |
+| -------------------- | ----------- | -------------------------------------------- |
+| `id`                 | integer     | ID user                                      |
+| `name`               | string      | nama user                                    |
+| `email`              | string      | email login                                  |
+| `phone`              | string/null | nomor telepon                                |
+| `role`               | enum        | normalnya `mitra` untuk app mitra            |
+| `profile_photo_path` | string/null | path internal foto profil                    |
+| `profile_photo_url`  | string/null | URL siap pakai untuk menampilkan foto profil |
+| `partner_profile`    | object/null | profil tenaga kesehatan                      |
+| `pharmacy`           | object/null | data apotik                                  |
+| `courier_profile`    | object/null | data kurir                                   |
 
 ### Partner Profile
 
@@ -971,48 +1163,102 @@ Gunakan channel ini jika app mitra perlu menampilkan status user online.
 
 ### Partner Service
 
-| Field                | Type                | Catatan                  |
-| -------------------- | ------------------- | ------------------------ |
-| `id`                 | integer             | ID pengajuan layanan     |
-| `service_id`         | integer             | ID layanan               |
-| `partner_user_id`    | integer             | ID mitra                 |
-| `custom_price`       | decimal string/null | harga custom             |
-| `coverage_radius_km` | integer/null        | radius layanan           |
-| `is_active`          | boolean             | aktif/nonaktif           |
-| `is_verified`        | boolean             | sudah diverifikasi admin |
-| `notes`              | string/null         | catatan                  |
-| `service`            | object/null         | detail layanan           |
+| Field                | Type                | Catatan                                                                                           |
+| -------------------- | ------------------- | ------------------------------------------------------------------------------------------------- |
+| `id`                 | integer             | ID pengajuan layanan                                                                              |
+| `service_id`         | integer             | ID layanan                                                                                        |
+| `partner_user_id`    | integer             | ID mitra                                                                                          |
+| `price`              | decimal string/null | harga yang terlihat di mitra; untuk service booking non-konsultasi mengikuti `service.base_price` |
+| `coverage_radius_km` | integer/null        | radius layanan                                                                                    |
+| `is_active`          | boolean             | aktif/nonaktif                                                                                    |
+| `is_verified`        | boolean             | sudah diverifikasi admin                                                                          |
+| `notes`              | string/null         | catatan                                                                                           |
+| `service`            | object/null         | detail layanan                                                                                    |
 
 ### Service Booking
 
-| Field                         | Type           | Catatan                                                                     |
-| ----------------------------- | -------------- | --------------------------------------------------------------------------- |
-| `id`                          | integer        | ID booking                                                                  |
-| `booking_code`                | string         | kode booking                                                                |
-| `service_id`                  | integer        | ID layanan                                                                  |
-| `patient_user_id`             | integer        | ID pasien                                                                   |
-| `patient_member_id`           | integer/null   | profil pasien keluarga                                                      |
-| `assigned_partner_user_id`    | integer/null   | ID mitra                                                                    |
-| `patient_address_id`          | integer/null   | alamat layanan                                                              |
-| `status`                      | enum           | `pending`, `confirmed`, `scheduled`, `on_the_way`, `completed`, `cancelled` |
-| `booking_type`                | enum           | `scheduled`, `daily`                                                        |
-| `scheduled_at`                | datetime/null  | jadwal                                                                      |
-| `schedule_start_at`           | datetime/null  | mulai layanan harian                                                        |
-| `schedule_end_at`             | datetime/null  | selesai layanan harian                                                      |
-| `duration_days`               | integer        | durasi hari                                                                 |
-| `accepted_at`                 | datetime/null  | waktu diterima                                                              |
-| `started_at`                  | datetime/null  | waktu mulai/perjalanan                                                      |
-| `completed_at`                | datetime/null  | waktu selesai                                                               |
-| `total_amount`                | decimal string | total                                                                       |
-| `notes`                       | string/null    | catatan                                                                     |
-| `service`                     | object/null    | layanan                                                                     |
-| `patient`                     | object/null    | user pasien                                                                 |
-| `patient_member`              | object/null    | profil pasien                                                               |
-| `assigned_partner`            | object/null    | user mitra                                                                  |
-| `address`                     | object/null    | alamat pasien                                                               |
-| `histories`                   | array          | riwayat status/treatment                                                    |
-| `payment`                     | object/null    | pembayaran                                                                  |
-| `partner_balance_transaction` | object/null    | transaksi saldo mitra                                                       |
+| Field                              | Type                | Catatan                                                                                                         |
+| ---------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `id`                               | integer             | ID booking                                                                                                      |
+| `booking_code`                     | string              | kode booking                                                                                                    |
+| `service_id`                       | integer             | ID layanan                                                                                                      |
+| `patient_user_id`                  | integer             | ID pasien                                                                                                       |
+| `patient_member_id`                | integer/null        | profil pasien keluarga                                                                                          |
+| `assigned_partner_user_id`         | integer/null        | ID mitra                                                                                                        |
+| `patient_address_id`               | integer/null        | alamat layanan                                                                                                  |
+| `status`                           | enum                | `pending`, `confirmed`, `scheduled`, `on_the_way`, `completed`, `cancelled`                                     |
+| `booking_type`                     | enum                | `scheduled`, `daily`                                                                                            |
+| `visit_plan`                       | enum                | `once`, `recurring`                                                                                             |
+| `recurrence`                       | enum/null           | `weekly`, `monthly`; null untuk sekali visit                                                                    |
+| `visit_count`                      | integer             | jumlah kunjungan dalam paket                                                                                    |
+| `care_mode`                        | enum                | `visit`, `live_in`                                                                                              |
+| `location_type`                    | enum                | `home`, `hospital`                                                                                              |
+| `distance_km`                      | decimal string/null | snapshot jarak saat matchmaking                                                                                 |
+| `scheduled_at`                     | datetime/null       | jadwal                                                                                                          |
+| `schedule_start_at`                | datetime/null       | mulai layanan harian                                                                                            |
+| `schedule_end_at`                  | datetime/null       | selesai layanan harian                                                                                          |
+| `duration_days`                    | integer             | durasi hari                                                                                                     |
+| `accepted_at`                      | datetime/null       | waktu diterima                                                                                                  |
+| `started_at`                       | datetime/null       | waktu mulai/perjalanan                                                                                          |
+| `completed_at`                     | datetime/null       | waktu selesai                                                                                                   |
+| `partner_current_latitude`         | decimal string/null | latitude lokasi realtime terakhir                                                                               |
+| `partner_current_longitude`        | decimal string/null | longitude lokasi realtime terakhir                                                                              |
+| `partner_location_accuracy_meters` | decimal string/null | akurasi GPS meter                                                                                               |
+| `partner_location_heading`         | decimal string/null | arah derajat 0-360                                                                                              |
+| `partner_location_speed_mps`       | decimal string/null | kecepatan meter/detik                                                                                           |
+| `partner_location_updated_at`      | datetime/null       | waktu lokasi terakhir diterima backend                                                                          |
+| `total_amount`                     | decimal string      | nominal mitra pada endpoint mitra; disamakan dengan `partner_payout_amount` untuk kompatibilitas dashboard lama |
+| `patient_total_amount`             | decimal/number      | total bayar pasien, bisa termasuk markup dan biaya tambahan                                                     |
+| `partner_payout_amount`            | decimal/number      | uang yang diterima mitra; base layanan + `transport_fee` + `meal_fee` jika ada, tanpa markup aplikasi           |
+| `partner_payout_breakdown`         | object              | rincian nominal dashboard mitra                                                                                 |
+| `transport_fee`                    | decimal string      | total transport seluruh kunjungan; nol untuk live-in                                                            |
+| `meal_fee`                         | decimal string      | total uang makan jika lokasi rumah sakit                                                                        |
+| `fee_policy_snapshot`              | object/null         | snapshot aturan biaya ketika pasien booking                                                                     |
+| `notes`                            | string/null         | catatan                                                                                                         |
+| `service`                          | object/null         | layanan                                                                                                         |
+| `patient`                          | object/null         | user pasien                                                                                                     |
+| `patient_member`                   | object/null         | profil pasien                                                                                                   |
+| `assigned_partner`                 | object/null         | user mitra                                                                                                      |
+| `address`                          | object/null         | alamat pasien                                                                                                   |
+| `histories`                        | array               | riwayat status/treatment                                                                                        |
+| `payment`                          | object/null         | pembayaran                                                                                                      |
+| `partner_balance_transaction`      | object/null         | transaksi saldo mitra                                                                                           |
+| `detail_actions`                   | object/null         | hanya muncul di detail booking; gunakan `chat.label = "Chat"` dan `call.label = "Call"` untuk tombol aksi       |
+
+Pada detail booking mitra, tombol komunikasi memakai field:
+
+```json
+{
+  "detail_actions": {
+    "chat": {
+      "label": "Chat",
+      "enabled": false,
+      "notifier": "Pasien harus menyelesaikan pembayaran terlebih dahulu untuk memakai fitur ini."
+    },
+    "call": {
+      "label": "Call",
+      "enabled": false,
+      "notifier": "Pasien harus menyelesaikan pembayaran terlebih dahulu untuk memakai fitur ini."
+    }
+  }
+}
+```
+
+Jika `payment.status != paid`, disable tombol `Chat` dan `Call`, lalu tampilkan `notifier` ketika mitra menekan tombol. Setelah pembayaran lunas, `enabled=true` dan `notifier=null`.
+
+`partner_payout_breakdown`:
+
+| Field                   | Type    | Catatan                                          |
+| ----------------------- | ------- | ------------------------------------------------ |
+| `service_base_amount`   | number  | biaya layanan dasar yang menjadi hak mitra       |
+| `transport_fee`         | number  | tambahan transportasi untuk mitra                |
+| `meal_fee`              | number  | uang makan untuk mitra                           |
+| `extra_fee_amount`      | number  | `transport_fee + meal_fee`                       |
+| `app_markup_amount`     | number  | markup aplikasi/platform, bukan pendapatan mitra |
+| `patient_total_amount`  | number  | total yang dibayar pasien                        |
+| `partner_payout_amount` | number  | total diterima mitra                             |
+| `transport_fee_applied` | boolean | tampilkan baris transport jika true              |
+| `meal_fee_applied`      | boolean | tampilkan baris uang makan jika true             |
 
 ### Consultation
 
@@ -1101,8 +1347,9 @@ Gunakan channel ini jika app mitra perlu menampilkan status user online.
 6. Subscribe ke `private-partner.{userId}.service-bookings` untuk booking match realtime.
 7. Subscribe ke `private-user.{userId}.notifications` untuk notifikasi realtime.
 8. Saat event booking masuk, panggil detail booking dan tampilkan tombol aksi sesuai status/payment.
-9. Untuk chat konsultasi, ambil list via `GET /api/mitra/consultations`, subscribe ke `private-consultation.{consultationId}`, lalu kirim pesan via endpoint messages.
-10. Untuk apotik, kelola produk dari endpoint `/api/mitra/apotik/products`.
+9. Saat mulai berangkat, panggil `PATCH /api/mitra/service-bookings/{id}/start-journey`, lalu kirim lokasi berkala ke `PATCH /api/mitra/service-bookings/{id}/location`.
+10. Untuk chat konsultasi, ambil list via `GET /api/mitra/consultations`, subscribe ke `private-consultation.{consultationId}`, lalu kirim pesan via endpoint messages.
+11. Untuk apotik, kelola produk dari endpoint `/api/mitra/apotik/products`.
 
 ## Debug WebSocket
 
