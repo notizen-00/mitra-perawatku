@@ -12,5 +12,12 @@ abstract class OrdersRepository {
 
   Future<OrderDetail> startJourney(int id);
 
+  Future<OrderDetail> addServiceBookingHistory({
+    required int id,
+    required String title,
+    required String description,
+    required String treatmentType,
+  });
+
   Future<OrderDetail> completeServiceBooking(int id);
 }

@@ -62,15 +62,19 @@ class ActiveTracking extends Equatable {
 
 class TrackingHistory extends Equatable {
   const TrackingHistory({
+    required this.title,
     required this.status,
     required this.notes,
+    required this.treatmentType,
     required this.createdAt,
   });
 
+  final String title;
   final String status;
   final String notes;
+  final String treatmentType;
   final String createdAt;
 
   @override
-  List<Object?> get props => [status, notes, createdAt];
+  List<Object?> get props => [title, status, notes, treatmentType, createdAt];
 }

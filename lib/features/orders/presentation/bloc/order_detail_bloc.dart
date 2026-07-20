@@ -5,6 +5,7 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/services/partner_location_sync_service.dart';
 import '../../domain/entities/order_detail.dart';
 import '../../domain/usecases/accept_service_booking.dart';
+import '../../domain/usecases/add_service_booking_history.dart';
 import '../../domain/usecases/complete_service_booking.dart';
 import '../../domain/usecases/decline_service_booking.dart';
 import '../../domain/usecases/get_order_detail.dart';
@@ -19,6 +20,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     this._acceptServiceBooking,
     this._declineServiceBooking,
     this._startJourney,
+    this._addServiceBookingHistory,
     this._completeServiceBooking,
     this._locationSyncService,
   ) : super(const OrderDetailInitial()) {
@@ -27,6 +29,8 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     on<OrderDetailAccepted>(_onAccepted);
     on<OrderDetailRejected>(_onRejected);
     on<OrderDetailJourneyStarted>(_onJourneyStarted);
+    on<OrderDetailArrived>(_onArrived);
+    on<OrderDetailTreatmentStarted>(_onTreatmentStarted);
     on<OrderDetailCompleted>(_onCompleted);
   }
 
@@ -34,6 +38,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   final AcceptServiceBooking _acceptServiceBooking;
   final DeclineServiceBooking _declineServiceBooking;
   final StartJourney _startJourney;
+  final AddServiceBookingHistory _addServiceBookingHistory;
   final CompleteServiceBooking _completeServiceBooking;
   final PartnerLocationSyncService _locationSyncService;
 
@@ -109,6 +114,40 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
         _locationSyncService.stopBookingLocationSync(bookingId: event.id);
         return detail;
       },
+    );
+  }
+
+  Future<void> _onArrived(
+    OrderDetailArrived event,
+    Emitter<OrderDetailState> emit,
+  ) async {
+    await _action(
+      emit,
+      action: () async {
+        final detail = await _addServiceBookingHistory(
+          id: event.id,
+          title: 'Mitra sampai di lokasi',
+          description: 'Mitra sudah tiba di alamat pasien.',
+          treatmentType: 'arrival',
+        );
+        _locationSyncService.stopBookingLocationSync(bookingId: event.id);
+        return detail;
+      },
+    );
+  }
+
+  Future<void> _onTreatmentStarted(
+    OrderDetailTreatmentStarted event,
+    Emitter<OrderDetailState> emit,
+  ) async {
+    await _action(
+      emit,
+      action: () => _addServiceBookingHistory(
+        id: event.id,
+        title: 'Penanganan pasien dimulai',
+        description: 'Mitra mulai melakukan pemeriksaan dan penanganan pasien.',
+        treatmentType: 'treatment_started',
+      ),
     );
   }
 

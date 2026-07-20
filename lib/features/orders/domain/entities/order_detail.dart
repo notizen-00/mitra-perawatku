@@ -60,15 +60,19 @@ class OrderDetail extends Equatable {
 
 class OrderHistory extends Equatable {
   const OrderHistory({
+    required this.title,
     required this.status,
     required this.notes,
+    required this.treatmentType,
     required this.createdAt,
   });
 
+  final String title;
   final String status;
   final String notes;
+  final String treatmentType;
   final String createdAt;
 
   @override
-  List<Object?> get props => [status, notes, createdAt];
+  List<Object?> get props => [title, status, notes, treatmentType, createdAt];
 }

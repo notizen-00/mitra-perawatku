@@ -202,6 +202,8 @@ class _NavigationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final action = _trackingActionFor(tracking);
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.primary,
@@ -209,25 +211,68 @@ class _NavigationCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.near_me_rounded, color: Colors.white),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Text(
-                tracking.hasActiveService
-                    ? 'Live map aktif untuk perjalanan ini'
-                    : 'Belum ada perjalanan aktif',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
+            Row(
+              children: [
+                Icon(_trackingActionIcon(action), color: Colors.white),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    _trackingActionText(action),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+              ],
             ),
+            if (action != _TrackingAction.idle) ...[
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: FilledButton.icon(
+                  onPressed: () => _handleTrackingAction(context, action, tracking.id),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: AppRadius.control,
+                    ),
+                  ),
+                  icon: Icon(_trackingActionButtonIcon(action)),
+                  label: Text(_trackingActionButtonLabel(action)),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  void _handleTrackingAction(
+    BuildContext context,
+    _TrackingAction action,
+    int bookingId,
+  ) {
+    final cubit = context.read<TrackingCubit>();
+    switch (action) {
+      case _TrackingAction.arrive:
+        cubit.markArrived(bookingId);
+        break;
+      case _TrackingAction.handle:
+        cubit.startTreatment(bookingId);
+        break;
+      case _TrackingAction.finish:
+        cubit.complete(bookingId);
+        break;
+      case _TrackingAction.idle:
+        break;
+    }
   }
 }
 
@@ -336,4 +381,74 @@ class _LiveMapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+enum _TrackingAction {
+  arrive,
+  handle,
+  finish,
+  idle,
+}
+
+_TrackingAction _trackingActionFor(ActiveTracking tracking) {
+  if (tracking.status.toLowerCase() != 'on_the_way') {
+    return tracking.hasActiveService ? _TrackingAction.idle : _TrackingAction.idle;
+  }
+
+  if (!_hasHistory(tracking, 'arrival')) return _TrackingAction.arrive;
+  if (!_hasHistory(tracking, 'treatment_started')) return _TrackingAction.handle;
+  return _TrackingAction.finish;
+}
+
+bool _hasHistory(ActiveTracking tracking, String marker) {
+  final normalizedMarker = marker.toLowerCase();
+  final readableMarker = normalizedMarker.replaceAll('_', ' ');
+  return tracking.histories.any((history) {
+    final treatmentType = history.treatmentType.toLowerCase();
+    final title = history.title.toLowerCase();
+    final notes = history.notes.toLowerCase();
+    return treatmentType == normalizedMarker ||
+        title.contains(readableMarker) ||
+        notes.contains(readableMarker) ||
+        (normalizedMarker == 'arrival' &&
+            (title.contains('sampai') || title.contains('tiba'))) ||
+        (normalizedMarker == 'treatment_started' &&
+            title.contains('penanganan'));
+  });
+}
+
+String _trackingActionText(_TrackingAction action) {
+  return switch (action) {
+    _TrackingAction.arrive => 'Live map aktif. Tandai jika Anda sudah tiba.',
+    _TrackingAction.handle => 'Anda sudah sampai. Mulai tangani pasien terlebih dahulu.',
+    _TrackingAction.finish => 'Penanganan sedang berjalan. Selesaikan setelah layanan selesai.',
+    _TrackingAction.idle => 'Belum ada perjalanan aktif',
+  };
+}
+
+String _trackingActionButtonLabel(_TrackingAction action) {
+  return switch (action) {
+    _TrackingAction.arrive => 'Saya Sudah Sampai',
+    _TrackingAction.handle => 'Tangani Pasien',
+    _TrackingAction.finish => 'Selesaikan Layanan',
+    _TrackingAction.idle => 'Tidak Ada Aksi',
+  };
+}
+
+IconData _trackingActionIcon(_TrackingAction action) {
+  return switch (action) {
+    _TrackingAction.arrive => Icons.near_me_rounded,
+    _TrackingAction.handle => Icons.medical_information_outlined,
+    _TrackingAction.finish => Icons.task_alt_rounded,
+    _TrackingAction.idle => Icons.info_outline_rounded,
+  };
+}
+
+IconData _trackingActionButtonIcon(_TrackingAction action) {
+  return switch (action) {
+    _TrackingAction.arrive => Icons.location_on_outlined,
+    _TrackingAction.handle => Icons.healing_outlined,
+    _TrackingAction.finish => Icons.check_circle_outline_rounded,
+    _TrackingAction.idle => Icons.info_outline_rounded,
+  };
 }

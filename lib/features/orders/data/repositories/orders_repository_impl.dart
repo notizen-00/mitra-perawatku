@@ -114,10 +114,36 @@ class OrdersRepositoryImpl implements OrdersRepository {
   }
 
   @override
+  Future<OrderDetail> addServiceBookingHistory({
+    required int id,
+    required String title,
+    required String description,
+    required String treatmentType,
+  }) async {
+    try {
+      await _apiClient.post(
+        ApiEndpoints.serviceBookingHistories(id),
+        body: {
+          'title': title,
+          'description': description,
+          'treatment_type': treatmentType,
+        },
+      );
+      return getOrderDetail(id);
+    } on ApiException catch (error) {
+      throw ServerFailure(error.message);
+    }
+  }
+
+  @override
   Future<OrderDetail> completeServiceBooking(int id) async {
     try {
       final response = await _apiClient.patch(
         ApiEndpoints.completeServiceBooking(id),
+        body: {
+          'notes': 'Layanan selesai.',
+          'summary': 'Pasien sudah mendapat tindakan dan edukasi perawatan.',
+        },
       );
       return _detail(jsonObject(response['data']) ?? response);
     } on ApiException catch (error) {
@@ -206,8 +232,12 @@ class OrdersRepositoryImpl implements OrdersRepository {
 
     return value.whereType<Map<String, dynamic>>().map((item) {
       return OrderHistory(
+        title: item['title']?.toString() ?? '',
         status: item['status']?.toString() ?? '-',
-        notes: item['notes']?.toString() ?? '',
+        notes: item['notes']?.toString() ??
+            item['description']?.toString() ??
+            '',
+        treatmentType: item['treatment_type']?.toString() ?? '',
         createdAt: displayTime(item['created_at'] ?? item['updated_at']),
       );
     }).toList();

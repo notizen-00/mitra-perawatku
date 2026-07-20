@@ -604,13 +604,33 @@ class _BottomAction extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: () => context
                           .read<OrderDetailBloc>()
-                          .add(OrderDetailCompleted(order.id)),
-                      icon: const Icon(Icons.check_circle_outline_rounded),
-                      label: const Text('Selesaikan'),
+                          .add(OrderDetailArrived(order.id)),
+                      icon: const Icon(Icons.location_on_outlined),
+                      label: const Text('Saya Sudah Sampai'),
                     ),
                   ),
                 ),
               ],
+            ),
+          _OrderAction.handling => SizedBox(
+              height: 48,
+              child: FilledButton.icon(
+                onPressed: () => context
+                    .read<OrderDetailBloc>()
+                    .add(OrderDetailTreatmentStarted(order.id)),
+                icon: const Icon(Icons.medical_information_outlined),
+                label: const Text('Tangani Pasien'),
+              ),
+            ),
+          _OrderAction.finish => SizedBox(
+              height: 48,
+              child: FilledButton.icon(
+                onPressed: () => context
+                    .read<OrderDetailBloc>()
+                    .add(OrderDetailCompleted(order.id)),
+                icon: const Icon(Icons.check_circle_outline_rounded),
+                label: const Text('Selesaikan Layanan'),
+              ),
             ),
           _OrderAction.none => SizedBox(
               height: 48,
@@ -1011,7 +1031,7 @@ _StatusCopy _statusCopy(String status, String paymentStatus) {
   final isPaid = paymentStatus.toLowerCase() == 'paid';
   return switch (status.toLowerCase()) {
     'on_the_way' => const _StatusCopy(
-        title: 'Sedang Menuju Lokasi',
+        title: 'Dalam Perjalanan',
         badge: 'Aktif',
       ),
     'confirmed' || 'scheduled' => _StatusCopy(
@@ -1025,6 +1045,11 @@ _StatusCopy _statusCopy(String status, String paymentStatus) {
 }
 
 String _historyTitle(OrderHistory history) {
+  if (history.title.trim().isNotEmpty) {
+    final time = history.createdAt == '-' ? '' : ' - ${history.createdAt}';
+    return '${history.title}$time';
+  }
+
   final status = history.status.replaceAll('_', ' ');
   final title = status.isEmpty || status == '-' ? 'Riwayat pesanan' : status;
   final time = history.createdAt == '-' ? '' : ' - ${history.createdAt}';
@@ -1072,6 +1097,8 @@ enum _OrderAction {
   waitingPayment,
   startJourney,
   onTheWay,
+  handling,
+  finish,
   none,
 }
 
@@ -1083,8 +1110,28 @@ _OrderAction _actionFor(OrderDetail order) {
   if (status == 'confirmed' || status == 'scheduled') {
     return isPaid ? _OrderAction.startJourney : _OrderAction.waitingPayment;
   }
-  if (status == 'on_the_way') return _OrderAction.onTheWay;
+  if (status == 'on_the_way') {
+    if (!_hasHistory(order, 'arrival')) return _OrderAction.onTheWay;
+    if (!_hasHistory(order, 'treatment_started')) return _OrderAction.handling;
+    return _OrderAction.finish;
+  }
   return _OrderAction.none;
+}
+
+bool _hasHistory(OrderDetail order, String marker) {
+  final normalizedMarker = marker.toLowerCase();
+  return order.histories.any((history) {
+    final treatmentType = history.treatmentType.toLowerCase();
+    final title = history.title.toLowerCase();
+    final notes = history.notes.toLowerCase();
+    return treatmentType == normalizedMarker ||
+        title.contains(normalizedMarker.replaceAll('_', ' ')) ||
+        notes.contains(normalizedMarker.replaceAll('_', ' ')) ||
+        (normalizedMarker == 'arrival' &&
+            (title.contains('sampai') || title.contains('tiba'))) ||
+        (normalizedMarker == 'treatment_started' &&
+            title.contains('penanganan'));
+  });
 }
 
 String _statusActionLabel(String status) {

@@ -52,6 +52,24 @@ class OrderDetailJourneyStarted extends OrderDetailEvent {
   List<Object?> get props => [id];
 }
 
+class OrderDetailArrived extends OrderDetailEvent {
+  const OrderDetailArrived(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
+class OrderDetailTreatmentStarted extends OrderDetailEvent {
+  const OrderDetailTreatmentStarted(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
 class OrderDetailCompleted extends OrderDetailEvent {
   const OrderDetailCompleted(this.id);
 

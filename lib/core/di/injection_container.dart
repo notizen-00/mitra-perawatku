@@ -30,6 +30,7 @@ import '../../features/notifications/presentation/cubit/notifications_cubit.dart
 import '../../features/orders/data/repositories/orders_repository_impl.dart';
 import '../../features/orders/domain/repositories/orders_repository.dart';
 import '../../features/orders/domain/usecases/accept_service_booking.dart';
+import '../../features/orders/domain/usecases/add_service_booking_history.dart';
 import '../../features/orders/domain/usecases/complete_service_booking.dart';
 import '../../features/orders/domain/usecases/decline_service_booking.dart';
 import '../../features/orders/domain/usecases/get_order_detail.dart';
@@ -142,6 +143,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AcceptServiceBooking(sl<OrdersRepository>()));
   sl.registerLazySingleton(() => DeclineServiceBooking(sl<OrdersRepository>()));
   sl.registerLazySingleton(() => StartJourney(sl<OrdersRepository>()));
+  sl.registerLazySingleton(() => AddServiceBookingHistory(sl<OrdersRepository>()));
   sl.registerLazySingleton(() => CompleteServiceBooking(sl<OrdersRepository>()));
   sl.registerFactory(
     () => OrdersCubit(
@@ -158,6 +160,7 @@ Future<void> init() async {
       sl<AcceptServiceBooking>(),
       sl<DeclineServiceBooking>(),
       sl<StartJourney>(),
+      sl<AddServiceBookingHistory>(),
       sl<CompleteServiceBooking>(),
       sl<PartnerLocationSyncService>(),
     ),
@@ -208,6 +211,8 @@ Future<void> init() async {
   sl.registerFactory(
     () => TrackingCubit(
       sl<GetActiveTracking>(),
+      sl<AddServiceBookingHistory>(),
+      sl<CompleteServiceBooking>(),
       sl<PartnerLocationSyncService>(),
     ),
   );

@@ -121,8 +121,12 @@ class TrackingRepositoryImpl implements TrackingRepository {
 
     return value.whereType<Map<String, dynamic>>().map((item) {
       return TrackingHistory(
+        title: item['title']?.toString() ?? '',
         status: item['status']?.toString() ?? '-',
-        notes: item['notes']?.toString() ?? '',
+        notes: item['notes']?.toString() ??
+            item['description']?.toString() ??
+            '',
+        treatmentType: item['treatment_type']?.toString() ?? '',
         createdAt: displayTime(item['created_at'] ?? item['updated_at']),
       );
     }).toList();
