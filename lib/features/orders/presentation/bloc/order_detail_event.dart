@@ -24,3 +24,39 @@ class OrderDetailRefreshed extends OrderDetailEvent {
   @override
   List<Object?> get props => [id];
 }
+
+class OrderDetailAccepted extends OrderDetailEvent {
+  const OrderDetailAccepted(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
+class OrderDetailRejected extends OrderDetailEvent {
+  const OrderDetailRejected(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
+class OrderDetailJourneyStarted extends OrderDetailEvent {
+  const OrderDetailJourneyStarted(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
+class OrderDetailCompleted extends OrderDetailEvent {
+  const OrderDetailCompleted(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}

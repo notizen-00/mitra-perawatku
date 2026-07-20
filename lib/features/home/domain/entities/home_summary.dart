@@ -126,6 +126,10 @@ class PartnerOrder extends Equatable {
     required this.distanceKm,
     required this.totalAmount,
     required this.paymentStatus,
+    required this.addressLabel,
+    required this.addressText,
+    required this.latitude,
+    required this.longitude,
   });
 
   final int id;
@@ -137,6 +141,10 @@ class PartnerOrder extends Equatable {
   final double distanceKm;
   final double totalAmount;
   final String paymentStatus;
+  final String addressLabel;
+  final String addressText;
+  final double latitude;
+  final double longitude;
 
   @override
   List<Object?> get props => [
@@ -149,6 +157,10 @@ class PartnerOrder extends Equatable {
     distanceKm,
     totalAmount,
     paymentStatus,
+    addressLabel,
+    addressText,
+    latitude,
+    longitude,
   ];
 }
 

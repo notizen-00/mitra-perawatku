@@ -104,6 +104,8 @@ class HomeRepositoryImpl implements HomeRepository {
   }
 
   PartnerOrder _partnerOrder(Map<String, dynamic> booking) {
+    final address = _extractObject(booking['address']);
+
     return PartnerOrder(
       id: _asInt(booking['id']),
       bookingCode: booking['booking_code']?.toString() ?? '-',
@@ -118,6 +120,10 @@ class HomeRepositoryImpl implements HomeRepository {
       distanceKm: _distanceKm(booking),
       totalAmount: _asDouble(booking['total_amount']),
       paymentStatus: _paymentStatus(booking),
+      addressLabel: address?['label']?.toString() ?? 'Alamat Pasien',
+      addressText: address?['address']?.toString() ?? '-',
+      latitude: _asDouble(address?['latitude']),
+      longitude: _asDouble(address?['longitude']),
     );
   }
 
@@ -191,8 +197,9 @@ class HomeRepositoryImpl implements HomeRepository {
   bool _isIncomingBooking(Map<String, dynamic> booking) {
     final status = booking['status']?.toString();
     return status == 'pending' ||
-        status == 'scheduled' ||
-        status == 'confirmed';
+        status == 'requested' ||
+        status == 'waiting' ||
+        status == 'new';
   }
 
   bool _isActiveBooking(Map<String, dynamic> booking) {

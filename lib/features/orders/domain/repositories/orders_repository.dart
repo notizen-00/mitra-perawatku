@@ -9,4 +9,8 @@ abstract class OrdersRepository {
   Future<OrderDetail> acceptServiceBooking(int id);
 
   Future<OrderDetail> declineServiceBooking(int id);
+
+  Future<OrderDetail> startJourney(int id);
+
+  Future<OrderDetail> completeServiceBooking(int id);
 }

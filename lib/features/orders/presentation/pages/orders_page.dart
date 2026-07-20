@@ -11,7 +11,9 @@ import '../../../../shared/widgets/cards/medical_card.dart';
 import '../../../../shared/widgets/common/error_card.dart';
 import '../../../../shared/widgets/loaders/card_skeleton.dart';
 import '../../../../shared/widgets/navigation/mitra_scaffold.dart';
+import '../../domain/entities/incoming_order.dart';
 import '../../domain/entities/order_booking.dart';
+import '../widgets/incoming_order_dialog.dart';
 import '../cubit/orders_cubit.dart';
 
 class OrdersPage extends StatelessWidget {
@@ -157,12 +159,14 @@ class _OrderListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final status = _statusInfo(order.status);
+    final status = _statusInfo(order.status, order.paymentStatus);
 
     return MedicalCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       padding: const EdgeInsets.all(12),
-      onTap: () => context.go('/orders/${order.id}'),
+      onTap: () => _isNewRequest(order.status)
+          ? _showIncomingOrder(context, order)
+          : context.go('/orders/${order.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -243,6 +247,37 @@ class _OrderListCard extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _showIncomingOrder(
+    BuildContext context,
+    OrderBooking order,
+  ) async {
+    final cubit = context.read<OrdersCubit>();
+    final accepted = await showIncomingOrderDialog(
+      context: context,
+      order: IncomingOrder(
+        id: order.id,
+        code: order.code,
+        serviceName: order.serviceName,
+        patientName: order.patientName,
+        scheduledAt: order.scheduledAt,
+        totalAmount: order.totalAmount,
+        paymentStatus: order.paymentStatus,
+        addressLabel: order.addressLabel,
+        addressText: order.addressText,
+        latitude: order.latitude,
+        longitude: order.longitude,
+        distanceKm: order.distanceKm,
+      ),
+      onAccept: () => cubit.accept(order.id),
+      onDecline: () => cubit.decline(order.id),
+    );
+
+    if (!context.mounted) return;
+    if (accepted == true) {
+      context.go('/orders/${order.id}');
+    }
+  }
 }
 
 class _ServiceIcon extends StatelessWidget {
@@ -287,7 +322,7 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 96),
+      constraints: const BoxConstraints(maxWidth: 120),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: info.background,
@@ -387,13 +422,41 @@ class _OrderActions extends StatelessWidget {
     if (_isNewRequest(order.status)) {
       return Row(
         children: [
-          Expanded(child: _CompactFilledButton(label: 'Terima', onPressed: () {})),
+          Expanded(
+            child: _CompactFilledButton(
+              label: 'Terima',
+              onPressed: () => context.read<OrdersCubit>().accept(order.id),
+            ),
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: _CompactOutlinedButton(
               label: 'Tolak',
               color: Theme.of(context).colorScheme.error,
-              onPressed: () {},
+              onPressed: () => context.read<OrdersCubit>().decline(order.id),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_isAcceptedStatus(order.status)) {
+      final isPaid = _isPaid(order.paymentStatus);
+      return Row(
+        children: [
+          Expanded(
+            child: _CompactOutlinedButton(
+              label: isPaid ? 'Lihat Detail' : 'Menunggu Pembayaran',
+              onPressed: isPaid ? () => context.go('/orders/${order.id}') : null,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: _CompactFilledButton(
+              label: isPaid ? 'Mulai Berangkat' : 'Belum Lunas',
+              onPressed: isPaid
+                  ? () => context.read<OrdersCubit>().startJourney(order.id)
+                  : null,
             ),
           ),
         ],
@@ -421,7 +484,7 @@ class _CompactFilledButton extends StatelessWidget {
   const _CompactFilledButton({required this.label, required this.onPressed});
 
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -450,7 +513,7 @@ class _CompactOutlinedButton extends StatelessWidget {
   });
 
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color? color;
 
   @override
@@ -529,14 +592,21 @@ _OrderFilter _categoryOf(String status) {
   };
 }
 
-_StatusInfo _statusInfo(String status) {
+_StatusInfo _statusInfo(String status, String paymentStatus) {
   final normalized = status.toLowerCase();
+  final isPaid = _isPaid(paymentStatus);
   return switch (normalized) {
-    'confirmed' || 'scheduled' => const _StatusInfo(
-      label: 'BERLANGSUNG',
-      foreground: AppColors.primary,
-      background: Color(0xFFCFF3E4),
-    ),
+    'confirmed' || 'scheduled' => isPaid
+        ? const _StatusInfo(
+            label: 'SIAP BERANGKAT',
+            foreground: AppColors.primary,
+            background: Color(0xFFCFF3E4),
+          )
+        : const _StatusInfo(
+            label: 'MENUNGGU BAYAR',
+            foreground: AppColors.secondary,
+            background: Color(0xFFE0EAFF),
+          ),
     'on_the_way' => const _StatusInfo(
       label: 'MENUJU LOKASI',
       foreground: AppColors.secondary,
@@ -567,6 +637,15 @@ bool _isNewRequest(String status) {
       normalized == 'requested' ||
       normalized == 'waiting' ||
       normalized == 'new';
+}
+
+bool _isAcceptedStatus(String status) {
+  final normalized = status.toLowerCase();
+  return normalized == 'confirmed' || normalized == 'scheduled';
+}
+
+bool _isPaid(String paymentStatus) {
+  return paymentStatus.toLowerCase() == 'paid';
 }
 
 String _emptyText(_OrderFilter filter) {

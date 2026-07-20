@@ -38,7 +38,7 @@ class _OrderDetailView extends StatelessWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       bottomNavigationBar: BlocBuilder<OrderDetailBloc, OrderDetailState>(
         builder: (context, state) {
-          if (state is! OrderDetailLoaded || state.order.status == 'completed') {
+          if (state is! OrderDetailLoaded || _isClosedStatus(state.order.status)) {
             return const SizedBox.shrink();
           }
           return _BottomAction(order: state.order);
@@ -167,7 +167,7 @@ class _StatusHeaderDelegate extends SliverPersistentHeaderDelegate {
   ) {
     final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
     final colors = Theme.of(context).colorScheme;
-    final status = _statusCopy(order.status);
+    final status = _statusCopy(order.status, order.paymentStatus);
     final timeText = order.startedAt == '-'
         ? 'Jadwal ${order.scheduledAt}'
         : 'Dimulai pada ${order.startedAt}';
@@ -526,7 +526,7 @@ class _BottomAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isOnTheWay = order.status == 'on_the_way';
+    final action = _actionFor(order);
 
     return SafeArea(
       top: false,
@@ -537,14 +537,90 @@ class _BottomAction extends StatelessWidget {
           AppSpacing.mobileMargin,
           AppSpacing.sm,
         ),
-        child: SizedBox(
-          height: 48,
-          child: FilledButton.icon(
-            onPressed: () => isOnTheWay ? context.go('/tracking') : null,
-            icon: Icon(isOnTheWay ? Icons.map_outlined : Icons.check_circle_outline_rounded),
-            label: Text(isOnTheWay ? 'Buka Peta Tracking' : 'Aksi Pesanan'),
-          ),
-        ),
+        child: switch (action) {
+          _OrderAction.request => Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: () => context
+                          .read<OrderDetailBloc>()
+                          .add(OrderDetailRejected(order.id)),
+                      icon: const Icon(Icons.close_rounded),
+                      label: const Text('Tolak'),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: FilledButton.icon(
+                      onPressed: () => context
+                          .read<OrderDetailBloc>()
+                          .add(OrderDetailAccepted(order.id)),
+                      icon: const Icon(Icons.check_rounded),
+                      label: const Text('Terima'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          _OrderAction.waitingPayment => SizedBox(
+              height: 48,
+              child: FilledButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.hourglass_top_rounded),
+                label: const Text('Menunggu Pembayaran'),
+              ),
+            ),
+          _OrderAction.startJourney => SizedBox(
+              height: 48,
+              child: FilledButton.icon(
+                onPressed: () => context
+                    .read<OrderDetailBloc>()
+                    .add(OrderDetailJourneyStarted(order.id)),
+                icon: const Icon(Icons.near_me_rounded),
+                label: const Text('Mulai Berangkat'),
+              ),
+            ),
+          _OrderAction.onTheWay => Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.go('/tracking'),
+                      icon: const Icon(Icons.map_outlined),
+                      label: const Text('Buka Peta'),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: FilledButton.icon(
+                      onPressed: () => context
+                          .read<OrderDetailBloc>()
+                          .add(OrderDetailCompleted(order.id)),
+                      icon: const Icon(Icons.check_circle_outline_rounded),
+                      label: const Text('Selesaikan'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          _OrderAction.none => SizedBox(
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.info_outline_rounded),
+                label: Text(_statusActionLabel(order.status)),
+              ),
+            ),
+        },
       ),
     );
   }
@@ -931,14 +1007,15 @@ class _StatusCopy {
   final String badge;
 }
 
-_StatusCopy _statusCopy(String status) {
+_StatusCopy _statusCopy(String status, String paymentStatus) {
+  final isPaid = paymentStatus.toLowerCase() == 'paid';
   return switch (status.toLowerCase()) {
     'on_the_way' => const _StatusCopy(
         title: 'Sedang Menuju Lokasi',
         badge: 'Aktif',
       ),
-    'confirmed' || 'scheduled' => const _StatusCopy(
-        title: 'Sedang Menangani',
+    'confirmed' || 'scheduled' => _StatusCopy(
+        title: isPaid ? 'Siap Berangkat' : 'Menunggu Pembayaran',
         badge: 'Aktif',
       ),
     'completed' => const _StatusCopy(title: 'Pesanan Selesai', badge: 'Selesai'),
@@ -971,4 +1048,50 @@ String _titleCase(String value) {
       .where((word) => word.isNotEmpty)
       .map((word) => word[0].toUpperCase() + word.substring(1))
       .join(' ');
+}
+
+bool _isNewRequest(String status) {
+  final normalized = status.toLowerCase();
+  return normalized == 'pending' ||
+      normalized == 'requested' ||
+      normalized == 'waiting' ||
+      normalized == 'new';
+}
+
+bool _isClosedStatus(String status) {
+  final normalized = status.toLowerCase();
+  return normalized == 'completed' ||
+      normalized == 'cancelled' ||
+      normalized == 'canceled' ||
+      normalized == 'rejected' ||
+      normalized == 'declined';
+}
+
+enum _OrderAction {
+  request,
+  waitingPayment,
+  startJourney,
+  onTheWay,
+  none,
+}
+
+_OrderAction _actionFor(OrderDetail order) {
+  final status = order.status.toLowerCase();
+  final isPaid = order.paymentStatus.toLowerCase() == 'paid';
+
+  if (_isNewRequest(status)) return _OrderAction.request;
+  if (status == 'confirmed' || status == 'scheduled') {
+    return isPaid ? _OrderAction.startJourney : _OrderAction.waitingPayment;
+  }
+  if (status == 'on_the_way') return _OrderAction.onTheWay;
+  return _OrderAction.none;
+}
+
+String _statusActionLabel(String status) {
+  return switch (status.toLowerCase()) {
+    'completed' => 'Pesanan Selesai',
+    'cancelled' || 'canceled' => 'Pesanan Dibatalkan',
+    'rejected' || 'declined' => 'Pesanan Ditolak',
+    _ => 'Belum Ada Aksi',
+  };
 }

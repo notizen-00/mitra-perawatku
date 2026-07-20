@@ -34,6 +34,7 @@ class OrdersRepositoryImpl implements OrdersRepository {
     final service = jsonObject(json['service']);
     final patient = jsonObject(json['patient']);
     final member = jsonObject(json['patient_member']);
+    final address = jsonObject(json['address']);
 
     final scheduledValue =
         json['scheduled_at'] ?? json['schedule_start_at'] ?? json['created_at'];
@@ -48,6 +49,12 @@ class OrdersRepositoryImpl implements OrdersRepository {
       scheduledDate: _displayDate(scheduledValue),
       scheduledAt: displayTime(scheduledValue),
       totalAmount: asDouble(json['total_amount']),
+      paymentStatus: _paymentStatus(json),
+      addressLabel: address?['label']?.toString() ?? 'Alamat Pasien',
+      addressText: address?['address']?.toString() ?? '-',
+      latitude: asDouble(address?['latitude']),
+      longitude: asDouble(address?['longitude']),
+      distanceKm: _distanceKm(json),
     );
   }
 
@@ -91,6 +98,28 @@ class OrdersRepositoryImpl implements OrdersRepository {
         'status': 'rejected',
         'notes': response['message']?.toString() ?? 'Pesanan ditolak.',
       });
+    } on ApiException catch (error) {
+      throw ServerFailure(error.message);
+    }
+  }
+
+  @override
+  Future<OrderDetail> startJourney(int id) async {
+    try {
+      final response = await _apiClient.patch(ApiEndpoints.startJourney(id));
+      return _detail(jsonObject(response['data']) ?? response);
+    } on ApiException catch (error) {
+      throw ServerFailure(error.message);
+    }
+  }
+
+  @override
+  Future<OrderDetail> completeServiceBooking(int id) async {
+    try {
+      final response = await _apiClient.patch(
+        ApiEndpoints.completeServiceBooking(id),
+      );
+      return _detail(jsonObject(response['data']) ?? response);
     } on ApiException catch (error) {
       throw ServerFailure(error.message);
     }
@@ -155,6 +184,14 @@ class OrdersRepositoryImpl implements OrdersRepository {
     return asDouble(
       json['distance_km'] ?? matchmaking?['distance_km'] ?? json['distance'],
     );
+  }
+
+  String _paymentStatus(Map<String, dynamic> json) {
+    final payment = jsonObject(json['payment']);
+    return payment?['status']?.toString() ??
+        json['payment_status']?.toString() ??
+        json['paymentStatus']?.toString() ??
+        'unpaid';
   }
 
   int _etaMinutes(Map<String, dynamic> json, double distance) {

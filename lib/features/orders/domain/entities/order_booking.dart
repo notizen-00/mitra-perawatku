@@ -10,6 +10,12 @@ class OrderBooking extends Equatable {
     required this.scheduledDate,
     required this.scheduledAt,
     required this.totalAmount,
+    required this.paymentStatus,
+    required this.addressLabel,
+    required this.addressText,
+    required this.latitude,
+    required this.longitude,
+    required this.distanceKm,
   });
 
   final int id;
@@ -20,6 +26,12 @@ class OrderBooking extends Equatable {
   final String scheduledDate;
   final String scheduledAt;
   final double totalAmount;
+  final String paymentStatus;
+  final String addressLabel;
+  final String addressText;
+  final double latitude;
+  final double longitude;
+  final double distanceKm;
 
   @override
   List<Object?> get props => [
@@ -31,5 +43,11 @@ class OrderBooking extends Equatable {
     scheduledDate,
     scheduledAt,
     totalAmount,
+    paymentStatus,
+    addressLabel,
+    addressText,
+    latitude,
+    longitude,
+    distanceKm,
   ];
 }

@@ -11,6 +11,10 @@ import '../../../../shared/widgets/chips/availability_chip.dart';
 import '../../../../shared/widgets/chips/status_chip.dart';
 import '../../../../shared/widgets/common/error_card.dart';
 import '../../../../shared/widgets/loaders/card_skeleton.dart';
+import '../../../orders/domain/entities/incoming_order.dart';
+import '../../../orders/domain/usecases/accept_service_booking.dart';
+import '../../../orders/domain/usecases/decline_service_booking.dart';
+import '../../../orders/presentation/widgets/incoming_order_dialog.dart';
 import '../../domain/entities/home_summary.dart';
 import '../cubit/home_cubit.dart';
 
@@ -481,7 +485,7 @@ class _OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MedicalCard(
-      onTap: () => context.go('/tracking'),
+      onTap: () => _showIncomingOrder(context, order),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -529,6 +533,39 @@ class _OrderCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _showIncomingOrder(
+    BuildContext context,
+    PartnerOrder order,
+  ) async {
+    final accepted = await showIncomingOrderDialog(
+      context: context,
+      order: IncomingOrder(
+        id: order.id,
+        code: order.bookingCode,
+        serviceName: order.serviceName,
+        patientName: order.patientName,
+        scheduledAt: order.scheduledAt,
+        totalAmount: order.totalAmount,
+        paymentStatus: order.paymentStatus,
+        addressLabel: order.addressLabel,
+        addressText: order.addressText,
+        latitude: order.latitude,
+        longitude: order.longitude,
+        distanceKm: order.distanceKm,
+      ),
+      onAccept: () => sl<AcceptServiceBooking>()(order.id),
+      onDecline: () => sl<DeclineServiceBooking>()(order.id),
+    );
+
+    if (!context.mounted) return;
+    if (accepted == true) {
+      context.go('/orders/${order.id}');
+      return;
+    }
+
+    context.read<HomeCubit>().load();
   }
 }
 

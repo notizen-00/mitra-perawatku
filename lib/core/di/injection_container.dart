@@ -30,9 +30,11 @@ import '../../features/notifications/presentation/cubit/notifications_cubit.dart
 import '../../features/orders/data/repositories/orders_repository_impl.dart';
 import '../../features/orders/domain/repositories/orders_repository.dart';
 import '../../features/orders/domain/usecases/accept_service_booking.dart';
+import '../../features/orders/domain/usecases/complete_service_booking.dart';
 import '../../features/orders/domain/usecases/decline_service_booking.dart';
 import '../../features/orders/domain/usecases/get_order_detail.dart';
 import '../../features/orders/domain/usecases/get_orders.dart';
+import '../../features/orders/domain/usecases/start_journey.dart';
 import '../../features/orders/presentation/bloc/order_detail_bloc.dart';
 import '../../features/orders/presentation/cubit/orders_cubit.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
@@ -139,8 +141,25 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetOrderDetail(sl<OrdersRepository>()));
   sl.registerLazySingleton(() => AcceptServiceBooking(sl<OrdersRepository>()));
   sl.registerLazySingleton(() => DeclineServiceBooking(sl<OrdersRepository>()));
-  sl.registerFactory(() => OrdersCubit(sl<GetOrders>()));
-  sl.registerFactory(() => OrderDetailBloc(sl<GetOrderDetail>()));
+  sl.registerLazySingleton(() => StartJourney(sl<OrdersRepository>()));
+  sl.registerLazySingleton(() => CompleteServiceBooking(sl<OrdersRepository>()));
+  sl.registerFactory(
+    () => OrdersCubit(
+      sl<GetOrders>(),
+      sl<AcceptServiceBooking>(),
+      sl<DeclineServiceBooking>(),
+      sl<StartJourney>(),
+    ),
+  );
+  sl.registerFactory(
+    () => OrderDetailBloc(
+      sl<GetOrderDetail>(),
+      sl<AcceptServiceBooking>(),
+      sl<DeclineServiceBooking>(),
+      sl<StartJourney>(),
+      sl<CompleteServiceBooking>(),
+    ),
+  );
 
   sl.registerLazySingleton<WalletRepository>(
     () => WalletRepositoryImpl(sl<ApiClient>(), sl<AuthSession>()),
