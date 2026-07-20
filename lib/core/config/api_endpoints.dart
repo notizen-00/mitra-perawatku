@@ -18,6 +18,7 @@ class ApiEndpoints {
 
   static String serviceBooking(int id) => '$serviceBookings/$id';
   static String acceptServiceBooking(int id) => '$serviceBookings/$id/accept';
+  static String rejectServiceBooking(int id) => '$serviceBookings/$id/reject';
   static String startJourney(int id) => '$serviceBookings/$id/start-journey';
   static String completeServiceBooking(int id) =>
       '$serviceBookings/$id/complete';

@@ -199,7 +199,7 @@ class _IncomingOrderSheetState extends State<_IncomingOrderSheet> {
                       if (!widget.order.isPaid) ...[
                         const SizedBox(height: AppSpacing.sm),
                         Text(
-                          'Tombol Terima aktif setelah pasien menyelesaikan pembayaran.',
+                          'Pesanan bisa diterima sebelum pembayaran lunas. Perjalanan dimulai setelah pembayaran selesai.',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: Theme.of(
@@ -223,7 +223,6 @@ class _IncomingOrderSheetState extends State<_IncomingOrderSheet> {
                 ),
               ),
               _Actions(
-                isPaid: widget.order.isPaid,
                 submitting: _submitting,
                 accepted: _accepted,
                 onAccept: () => _handle(true),
@@ -461,14 +460,12 @@ class _OrderSummary extends StatelessWidget {
 
 class _Actions extends StatelessWidget {
   const _Actions({
-    required this.isPaid,
     required this.submitting,
     required this.accepted,
     required this.onAccept,
     required this.onDecline,
   });
 
-  final bool isPaid;
   final bool submitting;
   final bool accepted;
   final VoidCallback onAccept;
@@ -513,7 +510,7 @@ class _Actions extends StatelessWidget {
               child: SizedBox(
                 height: 46,
                 child: FilledButton(
-                  onPressed: isPaid && !submitting ? onAccept : null,
+                  onPressed: submitting ? null : onAccept,
                   style: FilledButton.styleFrom(
                     shape: const RoundedRectangleBorder(
                       borderRadius: AppRadius.control,

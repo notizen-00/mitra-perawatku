@@ -66,7 +66,7 @@ class OrdersRepositoryImpl implements OrdersRepository {
     try {
       final response = await _apiClient.patch(
         ApiEndpoints.acceptServiceBooking(id),
-        body: {'notes': ''},
+        body: {'notes': 'Pesanan diterima, saya segera bersiap.'},
       );
       return _detail(jsonObject(response['data']) ?? response);
     } on ApiException catch (error) {
@@ -78,10 +78,19 @@ class OrdersRepositoryImpl implements OrdersRepository {
   Future<OrderDetail> declineServiceBooking(int id) async {
     try {
       final response = await _apiClient.patch(
-        ApiEndpoints.serviceBookingStatus(id),
-        body: {'status': 'cancelled', 'notes': ''},
+        ApiEndpoints.rejectServiceBooking(id),
+        body: {'notes': 'Jadwal tidak tersedia.'},
       );
-      return _detail(jsonObject(response['data']) ?? response);
+      final data = jsonObject(response['data']);
+      if (data != null && asInt(data['id']) > 0) {
+        return _detail(data);
+      }
+      return _detail({
+        'id': id,
+        'booking_code': '-',
+        'status': 'rejected',
+        'notes': response['message']?.toString() ?? 'Pesanan ditolak.',
+      });
     } on ApiException catch (error) {
       throw ServerFailure(error.message);
     }
