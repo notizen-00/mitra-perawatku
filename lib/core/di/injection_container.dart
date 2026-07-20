@@ -1,6 +1,12 @@
 import 'package:get_it/get_it.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../features/account/data/datasources/account_remote_data_source.dart';
+import '../../features/account/data/repositories/account_repository_impl.dart';
+import '../../features/account/domain/repositories/account_repository.dart';
+import '../../features/account/domain/usecases/get_account.dart';
+import '../../features/account/domain/usecases/logout_account.dart';
+import '../../features/account/presentation/bloc/account_bloc.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -78,6 +84,21 @@ Future<void> init() async {
     () => AuthCubit(
       loginMitra: sl<LoginMitra>(),
       registerMitra: sl<RegisterMitra>(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => AccountRemoteDataSource(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<AccountRepository>(
+    () => AccountRepositoryImpl(sl<AccountRemoteDataSource>(), sl<AuthSession>()),
+  );
+  sl.registerLazySingleton(() => GetAccount(sl<AccountRepository>()));
+  sl.registerLazySingleton(() => LogoutAccount(sl<AccountRepository>()));
+  sl.registerFactory(
+    () => AccountBloc(
+      getAccount: sl<GetAccount>(),
+      logoutAccount: sl<LogoutAccount>(),
     ),
   );
 

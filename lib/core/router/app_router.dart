@@ -3,13 +3,13 @@ import 'package:go_router/go_router.dart';
 
 import '../di/injection_container.dart';
 import '../services/auth_session.dart';
+import '../../features/account/presentation/pages/account_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/orders/presentation/pages/order_detail_page.dart';
 import '../../features/orders/presentation/pages/orders_page.dart';
-import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/services/presentation/pages/partner_services_page.dart';
 import '../../features/stitch_ui/presentation/pages/mockup_hub_page.dart';
 import '../../features/stitch_ui/presentation/pages/stitch_pages.dart';
@@ -70,7 +70,7 @@ final appRouter = GoRouter(
       path: '/services',
       builder: (context, state) => const PartnerServicesPage(),
     ),
-    GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
+    GoRoute(path: '/profile', builder: (context, state) => const AccountPage()),
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
     GoRoute(
       path: '/register',
