@@ -82,10 +82,16 @@ class ReverbWebSocketService {
         onDone: _handleDone,
         cancelOnError: true,
       );
-    } catch (_) {
+    } catch (error) {
       _setState(ReverbConnectionState.error);
+      _events.add(
+        ReverbEvent(
+          name: 'connection.error',
+          channel: null,
+          data: {'message': error.toString()},
+        ),
+      );
       _scheduleReconnect();
-      rethrow;
     }
   }
 
@@ -180,7 +186,7 @@ class ReverbWebSocketService {
     final seconds = (_reconnectAttempts * 2).clamp(2, 10);
     _reconnectTimer = Timer(Duration(seconds: seconds), () {
       if (_disposed || !_session.isAuthenticated) return;
-      connect();
+      connectAndSubscribe();
     });
   }
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "863916084623",
+    "project_id": "kendokenceng-3a73e",
+    "storage_bucket": "kendokenceng-3a73e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:863916084623:android:fd1a35eb61dbead8bacffa",
+        "android_client_info": {
+          "package_name": "com.perawatku.mitra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsz1hB5JquRT2Q6tnVO9zFJSSNYV7xMec"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

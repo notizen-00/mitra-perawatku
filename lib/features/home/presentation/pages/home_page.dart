@@ -36,22 +36,17 @@ class _HomeView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-          TextButton.icon(
-            onPressed: () => context.go('/mockup'),
-            icon: const Icon(Icons.layers_outlined),
-            label: const Text('Mockup'),
-          ),
           BlocBuilder<HomeCubit, HomeState>(
             builder: (context, state) {
-              final isAvailable =
-                  state is HomeLoaded ? state.summary.isAvailable : false;
+              final isAvailable = state is HomeLoaded
+                  ? state.summary.isAvailable
+                  : false;
               final loading = state is HomeLoading || state is HomeInitial;
               return _AvailabilityToggle(
                 isAvailable: isAvailable,
                 onChanged: loading
                     ? null
-                    : (value) =>
-                        context.read<HomeCubit>().setAvailable(value),
+                    : (value) => context.read<HomeCubit>().setAvailable(value),
               );
             },
           ),
@@ -743,9 +738,9 @@ class _AvailabilityToggle extends StatelessWidget {
         Text(
           isAvailable ? 'Aktif' : 'Nonaktif',
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: isAvailable ? colors.primary : colors.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-              ),
+            color: isAvailable ? colors.primary : colors.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         Switch(
           value: isAvailable,
