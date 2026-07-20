@@ -336,7 +336,7 @@ class _MapPreview extends StatelessWidget {
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.mitra_perawatku',
+                  userAgentPackageName: 'com.perawatku.mitra',
                 ),
                 if (partnerPoint != null && patientPoint != null)
                   PolylineLayer(

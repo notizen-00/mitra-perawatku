@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mitra_perawatku/app.dart';
-import 'package:mitra_perawatku/core/di/injection_container.dart';
+import 'package:perawatku_mitra/app.dart';
+import 'package:perawatku_mitra/core/di/injection_container.dart';
 
 void main() {
   testWidgets('app loads with Mitra login screen', (tester) async {
