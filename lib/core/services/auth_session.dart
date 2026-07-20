@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../features/auth/data/models/auth_user_model.dart';
@@ -9,6 +10,7 @@ import '../config/api_config.dart';
 class AuthSession {
   AuthSession(this._storage);
 
+  static final changes = ValueNotifier<int>(0);
   static const _tokenKey = 'auth_token';
   static const _userKey = 'auth_user';
 
@@ -66,6 +68,7 @@ class AuthSession {
       final model = AuthUserModel.fromEntity(user);
       await _storage.write(key: _userKey, value: jsonEncode(model.toJson()));
     }
+    _notifyChanged();
   }
 
   Future<void> clear() async {
@@ -78,5 +81,10 @@ class AuthSession {
     _token = null;
     _userId = null;
     _user = null;
+    _notifyChanged();
+  }
+
+  void _notifyChanged() {
+    changes.value++;
   }
 }

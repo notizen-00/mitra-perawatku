@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../../features/orders/domain/entities/incoming_order.dart';
@@ -158,6 +160,11 @@ class FcmPushService {
       'type': data['type'] ?? message.messageType,
       'title': data['title'] ?? message.notification?.title,
       'body': data['body'] ?? message.notification?.body,
+      'image_url': data['image_url'] ??
+          data['image'] ??
+          data['picture'] ??
+          message.notification?.android?.imageUrl ??
+          message.notification?.apple?.imageUrl,
       'reference_id':
           data['reference_id'] ?? data['service_booking_id'] ?? data['booking_id'],
       'reference_type': data['reference_type'],
@@ -230,22 +237,79 @@ class FcmPushService {
     final id = DateTime.now().millisecondsSinceEpoch.remainder(100000);
     final title = notification['title']?.toString() ?? 'Perawatku Mitra';
     final body = notification['body']?.toString() ?? 'Notifikasi baru';
+    final imageUrl = notification['image_url']?.toString();
+    final androidDetails = await _androidNotificationDetails(imageUrl);
 
     await _localNotifications.show(
       id,
       title,
       body,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'mitra_general_notifications',
-          'Mitra Notifications',
-          channelDescription: 'Notifikasi umum aplikasi Perawatku Mitra.',
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
-        ),
+      NotificationDetails(android: androidDetails),
+    );
+  }
+
+  Future<AndroidNotificationDetails> _androidNotificationDetails(
+    String? imageUrl,
+  ) async {
+    final imagePath = await _downloadNotificationImage(imageUrl);
+    if (imagePath == null) {
+      return const AndroidNotificationDetails(
+        'mitra_general_notifications',
+        'Mitra Notifications',
+        channelDescription: 'Notifikasi umum aplikasi Perawatku Mitra.',
+        importance: Importance.high,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+      );
+    }
+
+    final image = FilePathAndroidBitmap(imagePath);
+    return AndroidNotificationDetails(
+      'mitra_general_notifications',
+      'Mitra Notifications',
+      channelDescription: 'Notifikasi umum aplikasi Perawatku Mitra.',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      largeIcon: image,
+      styleInformation: BigPictureStyleInformation(
+        image,
+        largeIcon: image,
       ),
     );
+  }
+
+  Future<String?> _downloadNotificationImage(String? imageUrl) async {
+    if (imageUrl == null || imageUrl.trim().isEmpty) return null;
+
+    final uri = Uri.tryParse(imageUrl);
+    if (uri == null || !uri.hasScheme) return null;
+
+    try {
+      final request = await HttpClient()
+          .getUrl(uri)
+          .timeout(const Duration(seconds: 8));
+      final response = await request.close().timeout(
+            const Duration(seconds: 10),
+          );
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return null;
+      }
+
+      final bytes = await consolidateHttpClientResponseBytes(response);
+      final file = File(
+        '${Directory.systemTemp.path}/mitra_notification_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+      await file.writeAsBytes(bytes, flush: true);
+      return file.path;
+    } catch (error) {
+      developer.log(
+        'Gagal download gambar notifikasi',
+        name: 'token fcm',
+        error: error,
+      );
+      return null;
+    }
   }
 
   void dispose() {

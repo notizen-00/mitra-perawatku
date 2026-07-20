@@ -21,6 +21,7 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 final appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
   initialLocation: '/login',
+  refreshListenable: AuthSession.changes,
   redirect: (context, state) {
     if (!sl.isRegistered<AuthSession>()) return null;
 

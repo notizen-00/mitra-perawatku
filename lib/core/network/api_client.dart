@@ -84,6 +84,10 @@ class ApiClient {
       }
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
+        if (response.statusCode == 401) {
+          await _session.clear();
+        }
+
         throw ApiException(
           statusCode: response.statusCode,
           message: _extractMessage(decoded),
