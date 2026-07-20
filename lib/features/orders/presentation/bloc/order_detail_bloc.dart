@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../../../core/services/partner_location_sync_service.dart';
 import '../../domain/entities/order_detail.dart';
 import '../../domain/usecases/accept_service_booking.dart';
 import '../../domain/usecases/complete_service_booking.dart';
@@ -19,6 +20,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     this._declineServiceBooking,
     this._startJourney,
     this._completeServiceBooking,
+    this._locationSyncService,
   ) : super(const OrderDetailInitial()) {
     on<OrderDetailRequested>(_onRequested);
     on<OrderDetailRefreshed>(_onRefreshed);
@@ -33,6 +35,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   final DeclineServiceBooking _declineServiceBooking;
   final StartJourney _startJourney;
   final CompleteServiceBooking _completeServiceBooking;
+  final PartnerLocationSyncService _locationSyncService;
 
   Future<void> _onRequested(
     OrderDetailRequested event,
@@ -85,7 +88,13 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   ) async {
     await _action(
       emit,
-      action: () => _startJourney(event.id),
+      action: () async {
+        final detail = await _startJourney(event.id);
+        if (detail.status.toLowerCase() == 'on_the_way') {
+          _locationSyncService.startBookingLocationSync(detail.id);
+        }
+        return detail;
+      },
     );
   }
 
@@ -95,7 +104,11 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   ) async {
     await _action(
       emit,
-      action: () => _completeServiceBooking(event.id),
+      action: () async {
+        final detail = await _completeServiceBooking(event.id);
+        _locationSyncService.stopBookingLocationSync(bookingId: event.id);
+        return detail;
+      },
     );
   }
 

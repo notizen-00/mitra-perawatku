@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../../../core/services/partner_location_sync_service.dart';
 import '../../domain/entities/order_booking.dart';
 import '../../domain/usecases/accept_service_booking.dart';
 import '../../domain/usecases/decline_service_booking.dart';
@@ -16,12 +17,14 @@ class OrdersCubit extends Cubit<OrdersState> {
     this._acceptServiceBooking,
     this._declineServiceBooking,
     this._startJourney,
+    this._locationSyncService,
   ) : super(const OrdersInitial());
 
   final GetOrders _getOrders;
   final AcceptServiceBooking _acceptServiceBooking;
   final DeclineServiceBooking _declineServiceBooking;
   final StartJourney _startJourney;
+  final PartnerLocationSyncService _locationSyncService;
 
   Future<void> load() async {
     emit(const OrdersLoading());
@@ -44,7 +47,13 @@ class OrdersCubit extends Cubit<OrdersState> {
   }
 
   Future<void> startJourney(int id) async {
-    await _action(() => _startJourney(id));
+    await _action(() async {
+      final detail = await _startJourney(id);
+      if (detail.status.toLowerCase() == 'on_the_way') {
+        _locationSyncService.startBookingLocationSync(detail.id);
+      }
+      return detail;
+    });
   }
 
   Future<void> _action(Future<Object?> Function() action) async {

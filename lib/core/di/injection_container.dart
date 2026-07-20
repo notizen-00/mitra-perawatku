@@ -149,6 +149,7 @@ Future<void> init() async {
       sl<AcceptServiceBooking>(),
       sl<DeclineServiceBooking>(),
       sl<StartJourney>(),
+      sl<PartnerLocationSyncService>(),
     ),
   );
   sl.registerFactory(
@@ -158,6 +159,7 @@ Future<void> init() async {
       sl<DeclineServiceBooking>(),
       sl<StartJourney>(),
       sl<CompleteServiceBooking>(),
+      sl<PartnerLocationSyncService>(),
     ),
   );
 
@@ -203,7 +205,12 @@ Future<void> init() async {
     () => TrackingRepositoryImpl(sl<ApiClient>(), sl<AuthSession>()),
   );
   sl.registerLazySingleton(() => GetActiveTracking(sl<TrackingRepository>()));
-  sl.registerFactory(() => TrackingCubit(sl<GetActiveTracking>()));
+  sl.registerFactory(
+    () => TrackingCubit(
+      sl<GetActiveTracking>(),
+      sl<PartnerLocationSyncService>(),
+    ),
+  );
 
   sl.registerLazySingleton<ProfileRepository>(
     () => ProfileRepositoryImpl(sl<ApiClient>()),
