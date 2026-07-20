@@ -23,17 +23,25 @@ class WalletRepositoryImpl implements WalletRepository {
         },
       );
       final bookings = jsonList(response);
+      final transactions = _transactions(bookings);
 
       return WalletSummary(
         balance: _balance(bookings),
         todayIncome: bookings
             .where(_isToday)
             .where(_hasBalanceTransaction)
-            .fold(0, (total, item) => total + _credit(item)),
+            .fold(0.0, (total, item) => total + _credit(item)),
         pendingIncome: bookings
             .where((item) => _paymentStatus(item) == 'paid')
             .where((item) => !_hasBalanceTransaction(item))
-            .fold(0, (total, item) => total + asDouble(item['total_amount'])),
+            .fold(0.0, (total, item) => total + asDouble(item['total_amount'])),
+        commissionIncome: transactions
+            .where((item) => item.type == WalletTransactionType.commission)
+            .fold(0.0, (total, item) => total + item.amount.abs()),
+        bonusIncome: transactions
+            .where((item) => item.type == WalletTransactionType.bonus)
+            .fold(0.0, (total, item) => total + item.amount.abs()),
+        transactions: transactions,
       );
     } on ApiException catch (error) {
       throw ServerFailure(error.message);
@@ -52,7 +60,7 @@ class WalletRepositoryImpl implements WalletRepository {
 
     return bookings
         .where(_hasBalanceTransaction)
-        .fold(0, (total, item) => total + _credit(item));
+        .fold(0.0, (total, item) => total + _credit(item));
   }
 
   double _credit(Map<String, dynamic> booking) {
@@ -83,5 +91,134 @@ class WalletRepositoryImpl implements WalletRepository {
 
   String _paymentStatus(Map<String, dynamic> booking) {
     return jsonObject(booking['payment'])?['status']?.toString() ?? 'unpaid';
+  }
+
+  List<WalletTransaction> _transactions(List<Map<String, dynamic>> bookings) {
+    final transactions = <WalletTransaction>[];
+
+    for (final booking in bookings) {
+      final balanceTransaction = jsonObject(
+        booking['partner_balance_transaction'],
+      );
+
+      if (balanceTransaction != null) {
+        transactions.add(_balanceTransaction(booking, balanceTransaction));
+        continue;
+      }
+
+      if (_paymentStatus(booking) == 'paid') {
+        transactions.add(_pendingTransaction(booking));
+      }
+    }
+
+    transactions.sort((a, b) => b.id.compareTo(a.id));
+    return transactions.take(10).toList();
+  }
+
+  WalletTransaction _balanceTransaction(
+    Map<String, dynamic> booking,
+    Map<String, dynamic> transaction,
+  ) {
+    final amount = asDouble(
+      transaction['amount'] ??
+          transaction['credit'] ??
+          transaction['debit'] ??
+          transaction['total_amount'] ??
+          booking['total_amount'],
+    );
+    final direction = transaction['direction']?.toString() ??
+        transaction['type']?.toString() ??
+        '';
+    final signedAmount = _isDebit(direction, transaction) ? -amount.abs() : amount.abs();
+
+    return WalletTransaction(
+      id: asInt(transaction['id'] ?? booking['id']),
+      title: _transactionTitle(booking, transaction),
+      time: displayTime(
+        transaction['created_at'] ??
+            booking['completed_at'] ??
+            booking['updated_at'] ??
+            booking['created_at'],
+      ),
+      amount: signedAmount,
+      status: _transactionStatus(transaction),
+      type: _transactionType(booking, transaction),
+    );
+  }
+
+  WalletTransaction _pendingTransaction(Map<String, dynamic> booking) {
+    return WalletTransaction(
+      id: asInt(booking['id']),
+      title: _bookingTitle(booking),
+      time: displayTime(
+        booking['completed_at'] ?? booking['scheduled_at'] ?? booking['created_at'],
+      ),
+      amount: asDouble(booking['total_amount']),
+      status: WalletTransactionStatus.inProgress,
+      type: WalletTransactionType.service,
+    );
+  }
+
+  WalletTransactionStatus _transactionStatus(Map<String, dynamic> transaction) {
+    final status = transaction['status']?.toString().toLowerCase() ?? '';
+    return switch (status) {
+      'pending' => WalletTransactionStatus.pending,
+      'processing' || 'in_progress' => WalletTransactionStatus.inProgress,
+      _ => WalletTransactionStatus.completed,
+    };
+  }
+
+  WalletTransactionType _transactionType(
+    Map<String, dynamic> booking,
+    Map<String, dynamic> transaction,
+  ) {
+    final raw = '${transaction['type'] ?? ''} ${transaction['category'] ?? ''}'
+        .toLowerCase();
+    if (raw.contains('withdraw')) return WalletTransactionType.withdrawal;
+    if (raw.contains('bonus')) return WalletTransactionType.bonus;
+    if (raw.contains('commission') || raw.contains('komisi')) {
+      return WalletTransactionType.commission;
+    }
+
+    final serviceType =
+        jsonObject(booking['service'])?['service_type']?.toString().toLowerCase() ??
+            '';
+    if (serviceType.contains('consult')) return WalletTransactionType.commission;
+
+    return WalletTransactionType.service;
+  }
+
+  String _transactionTitle(
+    Map<String, dynamic> booking,
+    Map<String, dynamic> transaction,
+  ) {
+    final description = transaction['description']?.toString();
+    if (description != null && description.trim().isNotEmpty) {
+      return description;
+    }
+
+    return _bookingTitle(booking);
+  }
+
+  String _bookingTitle(Map<String, dynamic> booking) {
+    final serviceName =
+        jsonObject(booking['service'])?['name']?.toString() ?? 'Home Visit';
+    final patientName =
+        jsonObject(booking['patient_member'])?['name']?.toString() ??
+            jsonObject(booking['patient'])?['name']?.toString() ??
+            'Patient';
+
+    return '$serviceName - $patientName';
+  }
+
+  bool _isDebit(String direction, Map<String, dynamic> transaction) {
+    final raw = direction.toLowerCase();
+    if (raw.contains('debit') ||
+        raw.contains('withdraw') ||
+        raw.contains('payout')) {
+      return true;
+    }
+
+    return transaction['debit'] != null && asDouble(transaction['debit']) > 0;
   }
 }
